@@ -1,0 +1,73 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "marcom-qa",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
+      "port": 5173
+    },
+    {
+      "name": "ms-live",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "/private/tmp/claude-501/-Users-jinny-Mar-Calling-QA/72ed9127-fdfa-4f23-9893-16bc6dc5c20f/scratchpad/ur-mystery-shopper/serve.py",
+        "4173"
+      ],
+      "port": 4173
+    },
+    {
+      "name": "ms-sandbox-v2",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "/private/tmp/claude-501/-Users-jinny-Mar-Calling-QA/72ed9127-fdfa-4f23-9893-16bc6dc5c20f/scratchpad/ur-mystery-shopper-TEST/serve.py",
+        "4174"
+      ],
+      "port": 4174
+    },
+    {
+      "name": "ms-deploy-eric",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "4175",
+        "--directory",
+        "/private/tmp/claude-501/-Users-jinny-Mar-Calling-QA/65e58b8a-03e1-43e5-977f-d347ab885be0/scratchpad/deploy-eric"
+      ],
+      "port": 4175
+    },
+    {
+      "name": "ms-merged",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "/private/tmp/claude-501/-Users-jinny-Mar-Calling-QA/72ed9127-fdfa-4f23-9893-16bc6dc5c20f/scratchpad/ur-mystery-shopper/serve.py",
+        "4176"
+      ],
+      "port": 4176
+    },
+    {
+      "name": "ms-lean",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "/private/tmp/claude-501/-Users-jinny-Mar-Calling-QA/72ed9127-fdfa-4f23-9893-16bc6dc5c20f/scratchpad/ms-lean/serve.py",
+        "4177"
+      ],
+      "port": 4177
+    },
+    {
+      "name": "marcom-qa-lite",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "/Users/jinny/Mar Calling QA Lite",
+        "run",
+        "dev"
+      ],
+      "port": 5174
+    }
+  ]
+}

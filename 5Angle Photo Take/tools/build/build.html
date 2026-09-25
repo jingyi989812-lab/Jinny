@@ -1,0 +1,17 @@
+<!doctype html><meta charset="utf-8"><title>builder</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.4/babel.min.js"></script>
+<pre id="out">working</pre>
+<script>
+(async function(){
+  const out = document.getElementById('out');
+  try {
+    const html = await (await fetch('src.html', {cache:'no-store'})).text();
+    const open = '<script type="text/babel" data-presets="react">';
+    const i = html.indexOf(open), j = html.indexOf('</' + 'script>', i);
+    const src = html.slice(i + open.length, j);
+    const res = Babel.transform(src, { presets: ['react'], compact: false, comments: true, sourceType: 'script' });
+    const r = await fetch('save.php', { method: 'POST', body: res.code });
+    out.textContent = 'saved ' + (await r.text()) + ' bytes from ' + src.length;
+  } catch (e) { out.textContent = 'ERROR ' + e.message; }
+})();
+</script>

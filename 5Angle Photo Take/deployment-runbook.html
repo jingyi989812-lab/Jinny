@@ -1,0 +1,353 @@
+<title>Photo Flow Deployment</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+  :root{
+    --bg:#FAF7F1; --surface:#FFFFFF; --ink:#1F1C18; --ink2:#4A423A; --muted:#7A736A;
+    --line:#E7E0D4; --brand:#FFC02E; --brand-ink:#8A5F06; --brand-soft:#FFF5DD;
+    --good:#0B7A55; --good-soft:#E6F4EE; --warn:#A9530A; --warn-soft:#FBEEDF;
+    --code-bg:#1C1915; --code-ink:#E9E2D4; --code-line:#332D25;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --bg:#141210; --surface:#1E1B17; --ink:#F2EDE3; --ink2:#CBC2B4; --muted:#968C7F;
+      --line:#302A23; --brand:#FFC02E; --brand-ink:#FFC02E; --brand-soft:#2A2214;
+      --good:#42D19D; --good-soft:#12281F; --warn:#E9A155; --warn-soft:#2B1F12;
+      --code-bg:#100E0C; --code-ink:#E9E2D4; --code-line:#2A251E;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#141210; --surface:#1E1B17; --ink:#F2EDE3; --ink2:#CBC2B4; --muted:#968C7F;
+    --line:#302A23; --brand:#FFC02E; --brand-ink:#FFC02E; --brand-soft:#2A2214;
+    --good:#42D19D; --good-soft:#12281F; --warn:#E9A155; --warn-soft:#2B1F12;
+    --code-bg:#100E0C; --code-ink:#E9E2D4; --code-line:#2A251E;
+  }
+
+  *{box-sizing:border-box}
+  body{background:var(--bg);color:var(--ink);
+    font-family:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.65;}
+  .wrap{max-width:800px;margin:0 auto;padding:56px 24px 96px;}
+  .mono{font-family:'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,monospace;font-variant-numeric:tabular-nums;}
+  .track{letter-spacing:.15em;text-transform:uppercase;}
+
+  header{border-bottom:2px solid var(--line);padding-bottom:28px;margin-bottom:12px;}
+  .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:var(--brand-ink);
+    letter-spacing:.2em;text-transform:uppercase;}
+  h1{font-size:clamp(32px,6vw,46px);line-height:1.04;font-weight:800;letter-spacing:-.025em;
+    margin:12px 0 0;text-wrap:balance;}
+  .lede{font-size:17px;color:var(--ink2);margin:14px 0 0;max-width:62ch;}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px;}
+  .chip{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:var(--ink2);
+    background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 12px;}
+  .chip b{color:var(--brand-ink);font-weight:600;}
+
+  h2{font-size:23px;font-weight:800;letter-spacing:-.015em;margin:0;text-wrap:balance;}
+  section{margin-top:52px;}
+  .part-label{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+  section > p{max-width:64ch;color:var(--ink2);}
+
+  ol.steps{list-style:none;padding:0;margin:24px 0 0;counter-reset:s;}
+  ol.steps > li{counter-increment:s;display:grid;grid-template-columns:34px 1fr;gap:16px;
+    padding-bottom:22px;margin-bottom:22px;border-bottom:1px solid var(--line);}
+  ol.steps > li:last-child{border-bottom:none;padding-bottom:0;margin-bottom:0;}
+  ol.steps > li::before{content:counter(s);font-family:'IBM Plex Mono',monospace;font-size:12px;
+    font-weight:600;color:var(--brand-ink);background:var(--brand-soft);border-radius:9px;
+    width:30px;height:30px;display:grid;place-items:center;margin-top:1px;}
+  ol.steps .t{font-weight:700;font-size:16px;}
+  ol.steps p{margin:5px 0 0;color:var(--ink2);font-size:14.5px;max-width:60ch;}
+  .path{font-family:'IBM Plex Mono',monospace;font-size:13px;background:var(--brand-soft);
+    color:var(--brand-ink);padding:2px 7px;border-radius:6px;font-weight:500;
+    display:inline-block;line-height:1.5;}
+
+  pre{background:var(--code-bg);color:var(--code-ink);border:1px solid var(--code-line);
+    border-radius:12px;padding:16px 18px;overflow-x:auto;font-family:'IBM Plex Mono',monospace;
+    font-size:13px;line-height:1.65;margin:14px 0 0;}
+  pre .c{color:#8E8574;}
+  pre .k{color:#FFC02E;}
+  code{font-family:'IBM Plex Mono',monospace;font-size:.9em;background:var(--surface);
+    border:1px solid var(--line);border-radius:5px;padding:1px 5px;}
+
+  .call{border-radius:14px;padding:16px 18px;margin:18px 0 0;border:1px solid;max-width:66ch;}
+  .call .h{font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;letter-spacing:.16em;
+    text-transform:uppercase;margin-bottom:6px;}
+  .call p{margin:0;font-size:14.5px;}
+  .call.warn{background:var(--warn-soft);border-color:color-mix(in srgb,var(--warn) 35%,transparent);}
+  .call.warn .h{color:var(--warn);}
+  .call.note{background:var(--brand-soft);border-color:color-mix(in srgb,var(--brand) 45%,transparent);}
+  .call.note .h{color:var(--brand-ink);}
+  .call.ok{background:var(--good-soft);border-color:color-mix(in srgb,var(--good) 35%,transparent);}
+  .call.ok .h{color:var(--good);}
+
+  .diagram{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:12px;align-items:stretch;
+    margin:28px 0 0;}
+  .node{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;}
+  .node .n{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted);}
+  .node .v{font-weight:700;font-size:14.5px;margin-top:4px;line-height:1.3;}
+  .node .d{font-size:12px;color:var(--muted);margin-top:5px;line-height:1.45;}
+  .arrow{display:grid;place-items:center;color:var(--brand-ink);font-size:18px;font-weight:700;}
+  @media (max-width:640px){
+    .diagram{grid-template-columns:1fr;}
+    .arrow{transform:rotate(90deg);padding:2px 0;}
+  }
+
+  table{width:100%;border-collapse:collapse;margin-top:18px;font-size:14px;}
+  .scroll{overflow-x:auto;}
+  th{text-align:left;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted);font-weight:600;padding:0 14px 8px 0;
+    border-bottom:1px solid var(--line);white-space:nowrap;}
+  td{padding:12px 14px 12px 0;border-bottom:1px solid var(--line);vertical-align:top;color:var(--ink2);}
+  td:first-child{color:var(--ink);font-weight:600;min-width:190px;}
+
+  ul.plain{padding-left:20px;margin:14px 0 0;color:var(--ink2);max-width:64ch;}
+  ul.plain li{margin-bottom:7px;}
+
+  footer{margin-top:64px;padding-top:24px;border-top:2px solid var(--line);
+    font-size:13px;color:var(--muted);}
+  a{color:var(--brand-ink);}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">UR Klinik · Photo Flow</div>
+  <h1>Deployment Runbook</h1>
+  <p class="lede">Standing up the photo gateway on the Windows Server so that treatment photos land in the right Synology customer folder automatically — without a therapist ever opening Synology.</p>
+  <div class="chips">
+    <span class="chip">Host: <b>Windows Server + IIS</b></span>
+    <span class="chip">Storage: <b>Synology DS225+</b></span>
+    <span class="chip">Devices: <b>iPhone 6 · iOS 12</b></span>
+    <span class="chip">Time: <b>~90 minutes</b></span>
+  </div>
+</header>
+
+<section>
+  <div class="part-label">The shape of it</div>
+  <h2>What you are building</h2>
+  <p>The Windows Server hosts everything the therapist touches. The Synology goes back to being what it is good at — a file store. Nothing needs to be installed on the NAS at all.</p>
+
+  <div class="diagram">
+    <div class="node">
+      <div class="n">Clinic iPhone</div>
+      <div class="v">Photo Flow app</div>
+      <div class="d">Sends customer ID, phase, angle and the image over HTTPS. Never sends a path.</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="node">
+      <div class="n">Windows Server</div>
+      <div class="v">IIS + Node gateway</div>
+      <div class="d">Validates, derives the destination, writes over SMB. Holds the NAS credential.</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="node">
+      <div class="n">Synology DS225+</div>
+      <div class="v">Shared folder</div>
+      <div class="d">Folders appear on demand. Synology Drive indexes them as usual.</div>
+    </div>
+  </div>
+
+  <div class="call note">
+    <div class="h">The rule everything else protects</div>
+    <p>The phone never sends a folder path. It sends <code>customerId</code>, <code>phase</code> and <code>angle</code>, and the gateway derives <span class="path">\\NAS\UR-Klinik-Photos\RU-2756\2026-09-10\BEFORE\1-FRONT.jpg</span>. That is both the security boundary — a client that names its own path can write anywhere via <code>..\..\</code> — and the product promise, enforced structurally instead of by good behaviour in the UI.</p>
+  </div>
+</section>
+
+<section>
+  <div class="part-label">Part 1</div>
+  <h2>Prepare the Synology share</h2>
+  <p>Do this first: the Windows Server has nowhere to write until it exists.</p>
+  <ol class="steps">
+    <li><div>
+      <div class="t">Create the shared folder</div>
+      <p><span class="path">Control Panel → Shared Folder → Create</span> — name it <code>UR-Klinik-Photos</code>. Enable data checksum for advanced integrity. Leave the recycle bin on; it is a cheap safety net for a deleted customer folder.</p>
+    </div></li>
+    <li><div>
+      <div class="t">Create a service account on the NAS</div>
+      <p><span class="path">Control Panel → User &amp; Group → Create</span> — name it <code>svc_photoflow</code>. Give it <b>Read/Write on this one shared folder only</b>, deny everything else, and do not put it in the administrators group.</p>
+    </div></li>
+    <li><div>
+      <div class="t">Turn off 2-factor for that account</div>
+      <p>Service accounts and 2FA do not mix — SMB authentication will fail silently. Compensate by keeping the account restricted to the single folder.</p>
+    </div></li>
+    <li><div>
+      <div class="t">Confirm SMB is on</div>
+      <p><span class="path">Control Panel → File Services → SMB</span>. Set the minimum SMB protocol to <b>SMB2 and Large MTU</b> or higher. Do not enable SMB1.</p>
+    </div></li>
+  </ol>
+  <div class="call ok">
+    <div class="h">If you use Active Directory</div>
+    <p>Join the NAS to the domain at <span class="path">Control Panel → Domain/LDAP</span> and grant your existing domain service account rights on the folder instead of creating a local NAS user. Then step 2 of Part 2 becomes unnecessary — the Windows service authenticates with its domain identity directly.</p>
+  </div>
+</section>
+
+<section>
+  <div class="part-label">Part 2</div>
+  <h2>Give the Windows Server access</h2>
+  <ol class="steps">
+    <li><div>
+      <div class="t">Test the share from the server first</div>
+      <p>Log into the Windows Server and open the UNC path in Explorer. Do not continue until a file you create by hand appears in File Station on the NAS.</p>
+      <pre><span class="c"># In Explorer's address bar, or PowerShell:</span>
+explorer \\SYNOLOGY-NAS\UR-Klinik-Photos</pre>
+    </div></li>
+    <li><div>
+      <div class="t">Create a matching Windows account (non-AD sites only)</div>
+      <p>Without a domain, SMB pass-through needs a local Windows account whose <b>username and password match the NAS account exactly</b>. Create <code>svc_photoflow</code> on the Windows Server with the same password you set in Part 1.</p>
+    </div></li>
+  </ol>
+  <div class="call warn">
+    <div class="h">Two traps that will cost you an afternoon</div>
+    <p><b>Do not use a mapped drive letter.</b> A drive like <code>Z:</code> belongs to an interactive login session and does not exist for a Windows service. The service will start cleanly and then fail on every write. Always use the UNC path.</p>
+    <p style="margin-top:10px"><b>Do not leave the service running as LocalSystem.</b> LocalSystem authenticates to SMB as the <i>computer</i> account, which has no rights on the NAS. The service must run as the account from step 2.</p>
+  </div>
+</section>
+
+<section>
+  <div class="part-label">Part 3</div>
+  <h2>Install the gateway</h2>
+  <ol class="steps">
+    <li><div>
+      <div class="t">Install Node.js 20 LTS</div>
+      <p>Take the Windows x64 MSI from nodejs.org. Accept the defaults; it puts <code>node</code> on the system PATH, which the service installer checks for.</p>
+    </div></li>
+    <li><div>
+      <div class="t">Download NSSM</div>
+      <p>Node cannot register itself as a Windows service — it needs a wrapper that speaks the service control protocol. Get <code>nssm.exe</code> from nssm.cc and drop it beside <code>install-service.ps1</code>.</p>
+    </div></li>
+    <li><div>
+      <div class="t">Copy the gateway folder onto the server</div>
+      <p>Somewhere permanent, e.g. <code>C:\Apps\photoflow\</code>. Exclude the <code>nas-hosted\</code> subfolder — that is the fallback for running on the Synology instead and is not used here.</p>
+    </div></li>
+    <li><div>
+      <div class="t">Write the .env file</div>
+      <p>Copy <code>.env.example</code> to <code>.env</code> and set both values. Generate a real key — this is what stops anyone on the wifi from writing into customer folders.</p>
+      <pre><span class="c"># Generate a key:</span>
+powershell -c "[guid]::NewGuid().ToString('N')"
+
+<span class="c"># .env</span>
+<span class="k">DATA_DIR</span>=\\SYNOLOGY-NAS\UR-Klinik-Photos
+<span class="k">APP_KEY</span>=<span class="c">&lt;the generated key&gt;</span>
+<span class="k">PORT</span>=8080
+<span class="k">MAX_UPLOAD_MB</span>=12</pre>
+    </div></li>
+    <li><div>
+      <div class="t">Install the service</div>
+      <p>From an <b>elevated</b> PowerShell in that folder. It will prompt for the service account password.</p>
+      <pre>cd C:\Apps\photoflow
+.\install-service.ps1 <span class="k">-NasShare</span> "\\SYNOLOGY-NAS\UR-Klinik-Photos" <span class="k">`</span>
+                      <span class="k">-ServiceAccount</span> ".\svc_photoflow"</pre>
+    </div></li>
+  </ol>
+</section>
+
+<section>
+  <div class="part-label">Part 4</div>
+  <h2>Prove the write path works</h2>
+  <p>Before touching certificates or phones, confirm the one thing this whole system exists to do. Run this on the server.</p>
+  <pre><span class="c"># 1. Is it alive?</span>
+curl http://localhost:8080/api/health
+
+<span class="c"># 2. Save a photo for a customer whose folder does NOT exist yet.</span>
+curl -X POST http://localhost:8080/api/photos <span class="k">^</span>
+  -H "x-photoflow-key: &lt;your APP_KEY&gt;" <span class="k">^</span>
+  -F "customerId=RU-2756" -F "phase=BEFORE" -F "angle=front" <span class="k">^</span>
+  -F "photo=@C:\temp\test.jpg"</pre>
+  <div class="call ok">
+    <div class="h">What success looks like</div>
+    <p>You get back <code>{"ok":true,"duplicate":false,"path":"RU-2756/2026-09-10/BEFORE/1-FRONT.jpg"}</code>, and all three folders now exist in File Station — created on demand, by nobody. Run the same command a second time: it returns <code>duplicate: true</code> instead of a second file, which is what makes a retry over bad wifi safe.</p>
+  </div>
+</section>
+
+<section>
+  <div class="part-label">Part 5</div>
+  <h2>HTTPS front door</h2>
+  <p>This part is not optional. iOS refuses camera access on plain HTTP, and iOS 12 rejects a self-signed certificate outright — so without a real certificate the therapist simply cannot take a photo.</p>
+  <ol class="steps">
+    <li><div>
+      <div class="t">Enable IIS reverse proxying</div>
+      <p>Install the <b>URL Rewrite</b> and <b>Application Request Routing</b> modules, then <span class="path">IIS Manager → server node → Application Request Routing Cache → Server Proxy Settings → Enable proxy</span>.</p>
+    </div></li>
+    <li><div>
+      <div class="t">Create the site</div>
+      <p>Point a new IIS site at an empty folder and drop in the supplied <code>iis\web.config</code>. It forwards everything to <code>localhost:8080</code> and raises the upload limit — IIS caps requests at 30 MB by default, which a batch of iPhone photos will hit.</p>
+    </div></li>
+    <li><div>
+      <div class="t">Get a real certificate</div>
+      <p>Use <b>win-acme</b> for a Let's Encrypt certificate on a hostname you control, e.g. <code>photoflow.urklinik.com.my</code>, and point that name at the server's LAN address with split DNS. This is much less painful than an internal CA, which would mean installing a root profile on every iPhone.</p>
+    </div></li>
+    <li><div>
+      <div class="t">Force HTTPS</div>
+      <p>Redirect port 80 to 443 so a therapist typing the address bare still lands on a page where the camera works.</p>
+    </div></li>
+  </ol>
+</section>
+
+<section>
+  <div class="part-label">Part 6</div>
+  <h2>Lock it down and hand it over</h2>
+  <ol class="steps">
+    <li><div>
+      <div class="t">Firewall to the LAN</div>
+      <p>Windows Firewall: allow inbound 443 <b>from the clinic subnet only</b>. Block 8080 from everywhere except localhost — the Node service should only ever be reachable through IIS.</p>
+    </div></li>
+    <li><div>
+      <div class="t">Publish the folder in Synology Drive</div>
+      <p><span class="path">Synology Drive Admin Console → Team Folder</span> — enable <code>UR-Klinik-Photos</code>. Files arriving over SMB are indexed normally, so staff see customer folders appear in Drive without anything extra.</p>
+    </div></li>
+    <li><div>
+      <div class="t">Exclude the upload path from antivirus</div>
+      <p>Real-time scanning on the spool directory adds latency to every photo and occasionally locks a file mid-write. Exclude <code>C:\Apps\photoflow\</code>.</p>
+    </div></li>
+    <li><div>
+      <div class="t">Set up the phones</div>
+      <p>Open the site in Safari, enter the app key once, then <b>Share → Add to Home Screen</b>. On iOS 12 use the app's file-upload capture rather than the live preview — <code>getUserMedia</code> is unreliable on Safari 12 and fails outright in home-screen web apps there.</p>
+    </div></li>
+    <li><div>
+      <div class="t">Back up the index</div>
+      <p><code>_index\customers.json</code> and <code>_audit\</code> live on the NAS beside the photos, so Hyper Backup covers them with everything else. Confirm the job includes the new shared folder.</p>
+    </div></li>
+  </ol>
+</section>
+
+<section>
+  <div class="part-label">Part 7</div>
+  <h2>When something goes wrong</h2>
+  <div class="scroll">
+  <table>
+    <thead><tr><th>Symptom</th><th>Cause and fix</th></tr></thead>
+    <tbody>
+      <tr><td>Service starts, every upload returns 500</td><td>Almost always SMB rights. Check the service is running as <code>svc_photoflow</code> and not LocalSystem, and that <code>DATA_DIR</code> is a UNC path rather than a drive letter.</td></tr>
+      <tr><td>401 on every request</td><td><code>APP_KEY</code> in <code>.env</code> does not match what the phone sends. The service reads <code>.env</code> at install time — re-run the installer after changing it, a restart is not enough.</td></tr>
+      <tr><td>413 on larger photos</td><td>IIS request limit. Raise <code>maxAllowedContentLength</code> in <code>web.config</code>, and <code>MAX_UPLOAD_MB</code> to match.</td></tr>
+      <tr><td>502 from IIS</td><td>Node service is not running, or ARR proxying was never enabled. Check <code>logs\err.log</code> in the app folder.</td></tr>
+      <tr><td>Camera button does nothing on the iPhone</td><td>The page is not on HTTPS, or the certificate is not trusted by iOS 12. Confirm the padlock in Safari before debugging anything in the app.</td></tr>
+      <tr><td>Photos land but Drive never shows them</td><td>The shared folder is not enabled as a Team Folder, or Drive has not finished its initial index of a folder created after the fact.</td></tr>
+      <tr><td>Date folder is a day out</td><td>The folder name comes from the Windows Server's clock. Check its timezone is Malaysia time — the NAS's own setting is irrelevant here.</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section>
+  <div class="part-label">Still open</div>
+  <h2>What this runbook does not cover</h2>
+  <ul class="plain">
+    <li><b>Wiring the app to the API.</b> The prototype still simulates its uploads. The production build needs to POST to <code>/api/photos</code> after each angle passes its quality check — not all ten at the end, which is where clinic wifi will fail you.</li>
+    <li><b>Where the customer list comes from.</b> Right now the gateway keeps its own <code>customers.json</code>. If bookings live in another system, that becomes the source of truth and the gateway reads from it instead.</li>
+    <li><b>Offline queue.</b> Photos should sit in IndexedDB with a pending flag and retry with backoff, showing "8 of 10 uploaded" rather than a spinner that lies.</li>
+    <li><b>Retention and consent.</b> Customer face photos are personal data under the PDPA. Worth settling who may open the Team Folder, and how long photos are kept, before rollout rather than after.</li>
+  </ul>
+</section>
+
+<footer>
+  <b>MVP prototype · for internal discussion only.</b><br>
+  Gateway source: <code>gateway/server.js</code> · Service installer: <code>gateway/install-service.ps1</code> · IIS config: <code>gateway/iis/web.config</code><br>
+  Mock data throughout the prototype. No customer information in this document.
+</footer>
+
+</div>

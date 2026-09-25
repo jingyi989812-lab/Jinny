@@ -1,0 +1,24 @@
+services:
+  photoflow:
+    build: .
+    container_name: urklinik-photoflow
+    restart: unless-stopped
+
+    # Files land owned by this user so DSM and Synology Drive can manage them.
+    # Leave as 0:0 to run as root (works, but files end up root-owned).
+    user: "${PUID:-0}:${PGID:-0}"
+
+    environment:
+      TZ: Asia/Kuala_Lumpur
+      APP_KEY: "${APP_KEY}"
+      DATA_DIR: /data
+      PORT: "8080"
+      MAX_UPLOAD_MB: "12"
+
+    ports:
+      - "8080:8080"
+
+    volumes:
+      # LEFT SIDE: the shared folder you created in DSM.
+      # RIGHT SIDE: leave as /data — the app expects it.
+      - /volume1/UR-Klinik-Photos:/data

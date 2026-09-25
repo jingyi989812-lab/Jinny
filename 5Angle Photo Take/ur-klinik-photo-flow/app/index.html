@@ -30,7 +30,10 @@
   [hidden]{display:none !important;}
   button,input{font-family:inherit;font-size:100%;margin:0;}
   button{-webkit-appearance:none;appearance:none;border:0;background:none;cursor:pointer;}
-  input{-webkit-appearance:none;appearance:none;border-radius:0;}
+  input{-webkit-appearance:none;appearance:none;border-radius:0;border:0;background:transparent;}
+  /* Tailwind's preflight resets these; the layout was drawn with them at zero. */
+  p,h1,h2,h3,h4,ul,ol,figure,blockquote{margin:0;}
+  ul,ol{padding:0;list-style:none;}
   table{border-collapse:collapse;}
   svg{display:block;}
   .boot{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;}
@@ -83,6 +86,10 @@
     .screen{max-width:480px;margin:0 auto;box-shadow:0 0 0 1px var(--line);}
     .screen{border-radius:0;}
     .side{display:none;}
+    .sbar{display:none !important;}
+    .screen{padding-top:env(safe-area-inset-top);}
+    .dock{padding-bottom:calc(.75rem + env(safe-area-inset-bottom));}
+    .app-scroll:after{content:"";display:block;height:env(safe-area-inset-bottom);}
   }
   .fade-up{animation:fadeUp .34s cubic-bezier(.2,.7,.3,1) both;}
   @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
@@ -97,7 +104,8 @@
   @media (prefers-reduced-motion:reduce){
     *{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
   }
-  button:focus-visible, input:focus-visible, [tabindex]:focus-visible{outline:3px solid var(--brand-deep);outline-offset:2px;border-radius:14px;}
+  button:focus-visible, [tabindex]:focus-visible{outline:3px solid var(--brand-deep);outline-offset:2px;border-radius:14px;}
+  input:focus, input:focus-visible{outline:none;}   /* inputs show focus with their own yellow border */
   input{font-family:inherit;}
   .tap{transition:transform .12s ease, box-shadow .12s ease, background-color .12s ease;}
   .tap:active{transform:scale(.975);}
@@ -111,6 +119,7 @@
 .\!text-white\/55{color:rgba(255,255,255,0.55) !important}
 .\!w-\[38\%\]{width:38% !important}
 .\!w-\[62\%\]{width:62% !important}
+.\!text-\[13px\]{font-size:13px !important}
 .-bottom-1\.5{bottom:-0.375rem}
 .-ml-1{margin-left:-0.25rem}
 .-translate-x-1\/2{-webkit-transform:translateX(-50%);transform:translateX(-50%)}
@@ -299,7 +308,6 @@
 .rounded-xl{border-radius:12px}
 .select-none{-webkit-user-select:none;user-select:none}
 .self-stretch{align-self:stretch}
-.shadow-\[0_10px_28px_-8px_rgba(14,159,110,\.7)\]{box-shadow:0 10px 28px -8px rgba(14,159,110,.7)}
 .text-\[10\.5px\]{font-size:10.5px}
 .text-\[10px\]{font-size:10px}
 .text-\[11\.5px\]{font-size:11.5px}
@@ -372,6 +380,24 @@
 .w-px{width:1px}
 .whitespace-nowrap{white-space:nowrap}
 
+.text-ink\/75{color:rgba(22,19,15,.75)}
+.text-\[19px\]{font-size:19px}
+.backdrop-blur{-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.shadow-\[0_6px_0_0_\#D69A00\]{box-shadow:0 6px 0 0 #D69A00}
+.shadow-\[0_6px_0_0_\#0A7A55\]{box-shadow:0 6px 0 0 #0A7A55}
+.active\:shadow-\[0_2px_0_0_\#D69A00\]:active{box-shadow:0 2px 0 0 #D69A00}
+.active\:shadow-\[0_2px_0_0_\#0A7A55\]:active{box-shadow:0 2px 0 0 #0A7A55}
+.active\:translate-y-\[4px\]:active{-webkit-transform:translateY(4px);transform:translateY(4px)}
+.shadow-\[0_10px_28px_-8px_rgba\(14\,159\,110\,\.7\)\]{box-shadow:0 10px 28px -8px rgba(14,159,110,.7)}
+.-top-1\.5{top:-0.375rem}
+.-right-1\.5{right:-0.375rem}
+.grid.gap-1{grid-gap:0.25rem}
+.flex.gap-1 > * + *{margin-left:0.25rem}
+.flex.flex-col.gap-1 > * + *{margin-left:0;margin-top:0.25rem}
+.ml-\[91px\]{margin-left:91px}
+.border-warn{border-color:#C2620A}
+.border-warn\/25{border-color:rgba(194,98,10,.25)}
+.border-good\/25{border-color:rgba(14,159,110,.25)}
 /* gap: margin fallback, because flex gap is unsupported on Safari 12 */
 .grid.gap-0\.5{grid-gap:0.125rem}
 .flex.gap-0\.5 > * + *{margin-left:0.125rem}
@@ -397,6 +423,10 @@
 .grid.gap-\[5px\]{grid-gap:5px}
 .flex.gap-\[5px\] > * + *{margin-left:5px}
 .flex.flex-col.gap-\[5px\] > * + *{margin-left:0;margin-top:5px}
+.flex.flex-wrap.gap-1\.5 > *, .flex.flex-wrap.gap-1\.5 > * + *{margin:0 0.375rem 0.375rem 0}
+.flex.flex-wrap.gap-1\.5{margin-bottom:-0.375rem}
+.flex.flex-wrap.gap-2 > *, .flex.flex-wrap.gap-2 > * + *{margin:0 0.5rem 0.5rem 0}
+.flex.flex-wrap.gap-2{margin-bottom:-0.5rem}
 .grid.gap-x-3{-webkit-column-gap:0.75rem;column-gap:0.75rem}
 .flex.gap-x-3 > * + *{margin-left:0.75rem}
 .grid.gap-y-1\.5{-webkit-row-gap:0.375rem;row-gap:0.375rem}
@@ -461,7 +491,7 @@
     window.addEventListener('orientationchange', function(){ setTimeout(setH, 120); }, false);
   })();
 </script>
-<script>window.PHOTOFLOW_PILOT = true; window.PHOTOFLOW_VERSION = "1eb26315";
+<script>window.PHOTOFLOW_PILOT = true; window.PHOTOFLOW_VERSION = "1a8c66a2";
   /* If React never arrives (no internet), say so instead of spinning forever. */
   setTimeout(function(){ if (!window.ReactDOM) { var t = document.querySelector(".boot-txt"); if (t) t.innerHTML = "Couldn\u2019t load Photo Flow.<br>Check the wifi, then reload."; } }, 15000);
 </script>
@@ -707,7 +737,9 @@ function CustomerReferencePhoto({
   off = 0,
   className = '',
   radius = 18,
-  muted = false
+  muted = false,
+  compact = false,
+  short = false
 }) {
   if (c && REF_SRC[c.id] && off === 0) {
     return /*#__PURE__*/React.createElement("img", {
@@ -726,7 +758,9 @@ function CustomerReferencePhoto({
   if (c && c.live) return /*#__PURE__*/React.createElement(LiveReference, {
     c: c,
     className: className,
-    radius: radius
+    radius: radius,
+    compact: compact,
+    short: short
   });
   if (c) seed = c.seed || 0;
   const s = seed % 6,
@@ -906,7 +940,9 @@ function loadReference(id) {
 function LiveReference({
   c,
   className,
-  radius
+  radius,
+  compact,
+  short
 }) {
   const [st, setSt] = useState({
     loading: true,
@@ -947,10 +983,10 @@ function LiveReference({
   }, !st.loading && /*#__PURE__*/React.createElement("div", {
     className: "flex flex-col items-center"
   }, /*#__PURE__*/React.createElement(Icon.cam, {
-    s: 20
-  }), /*#__PURE__*/React.createElement("span", {
+    s: compact ? 16 : 20
+  }), !compact && /*#__PURE__*/React.createElement("span", {
     className: "mono text-[8px] font-bold track mt-1 text-center"
-  }, "NO PHOTO YET")));
+  }, short ? 'NO PHOTO' : 'NO PHOTO YET')));
 }
 
 /* ============================== PRIMITIVES ============================== */
@@ -1153,9 +1189,9 @@ function StatusPill({
 function StatusBar({
   dark = false
 }) {
-  const c = dark ? 'text-white/85' : 'text-ink/75';
+  const c = dark ? 'text-white/85 bg-ink' : 'text-ink/75';
   return /*#__PURE__*/React.createElement("div", {
-    className: `flex items-center justify-between px-6 pt-2.5 pb-1 text-[11px] font-semibold ${c} mono flex-none`
+    className: `sbar flex items-center justify-between px-6 pt-2.5 pb-1 text-[11px] font-semibold ${c} mono flex-none`
   }, /*#__PURE__*/React.createElement("span", null, clock()), /*#__PURE__*/React.createElement("div", {
     className: "flex items-center gap-1.5"
   }, /*#__PURE__*/React.createElement("svg", {
@@ -1231,9 +1267,7 @@ function TopBar({
     onClick: onBack,
     "aria-label": "Back",
     className: `tap w-10 h-10 -ml-1 rounded-xl flex items-center justify-center ${dark ? 'text-white/80 hover:bg-white/10' : 'text-ink2 hover:bg-black/5'}`
-  }, /*#__PURE__*/React.createElement(Icon.back, null)) : /*#__PURE__*/React.createElement("div", {
-    className: "w-2"
-  }), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement(Icon.back, null)) : null, /*#__PURE__*/React.createElement("div", {
     className: "flex-1 min-w-0"
   }, /*#__PURE__*/React.createElement("div", {
     className: `mono track text-[10.5px] font-bold uppercase ${dark ? 'text-brand' : 'text-brandDeep'}`
@@ -1245,7 +1279,7 @@ function Dock({
   children
 }) {
   return /*#__PURE__*/React.createElement("div", {
-    className: "flex-none px-4 pt-2.5 pb-3 bg-cream/95 backdrop-blur border-t border-line space-y-2"
+    className: "dock flex-none px-4 pt-2.5 pb-3 bg-cream/95 backdrop-blur border-t border-line space-y-2"
   }, children);
 }
 
@@ -1266,7 +1300,8 @@ function CustomerCard({
   }, /*#__PURE__*/React.createElement(CustomerReferencePhoto, {
     c: c,
     className: "w-[68px] h-[68px]",
-    radius: 14
+    radius: 14,
+    short: true
   }), /*#__PURE__*/React.createElement("span", {
     className: "mono absolute -bottom-1.5 left-1/2 -translate-x-1/2 bg-ink text-white text-[8px] font-semibold px-1.5 py-[2px] rounded track"
   }, "REF")), /*#__PURE__*/React.createElement("div", {
@@ -2512,7 +2547,23 @@ function LiveCamera({
       padding: '4px 8px',
       borderRadius: 6
     }
-  }, guide ? angle.n + ' / 5 · ' : '', angle.full), !dims && !err && /*#__PURE__*/React.createElement("div", {
+  }, guide ? angle.n + ' / 5 · ' : '', angle.full), dims && angle && angle.hint && /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      bottom: 0,
+      padding: '28px 12px 12px',
+      textAlign: 'center',
+      background: 'linear-gradient(to top, rgba(0,0,0,.6), rgba(0,0,0,0))'
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: '#fff',
+      fontSize: 13,
+      fontWeight: 700
+    }
+  }, angle.hint)), !dims && !err && /*#__PURE__*/React.createElement("div", {
     className: "mono",
     style: {
       position: 'absolute',
@@ -2699,8 +2750,9 @@ function CameraCapture({
     style: {
       background: 'radial-gradient(120% 90% at 50% 20%, #3A332B 0%, #16130F 75%)'
     }
-  }, /*#__PURE__*/React.createElement(AngleGuide, {
-    angle: angle
+  }, /*#__PURE__*/React.createElement(GridLines, null), /*#__PURE__*/React.createElement(AngleGuide, {
+    angle: angle,
+    grid: false
   })), /*#__PURE__*/React.createElement("div", {
     className: "absolute top-3 left-3 right-3 flex items-start justify-between"
   }, /*#__PURE__*/React.createElement("span", {
@@ -2769,12 +2821,18 @@ function QualityCheck({
   const failed = checks ? checks.filter(c => !c.ok) : [];
   return /*#__PURE__*/React.createElement("div", {
     className: "space-y-3"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "mx-auto",
+    style: {
+      width: '100%',
+      maxWidth: '33vh'
+    }
   }, /*#__PURE__*/React.createElement(PhotoPreview, {
     photo: photo,
     className: "ratio ratio-1x1",
     radius: 24,
     full: true
-  }), /*#__PURE__*/React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: `rounded-2xl border p-3 ${done && failed.length ? 'bg-warnSoft border-warn/30' : 'bg-paper border-line'}`
   }, /*#__PURE__*/React.createElement("div", {
     className: "flex items-center gap-1.5 mb-2.5"
@@ -2807,13 +2865,15 @@ function QualityCheck({
   })), done && failed.length > 0 && /*#__PURE__*/React.createElement("p", {
     className: "pop mt-3 text-[13px] font-bold text-warn leading-snug"
   }, failed.length === 1 ? failed[0].bad + '. Please retake.' : 'Photo may be unclear. Please retake.')), done ? failed.length > 0 ? /*#__PURE__*/React.createElement("div", {
-    className: "space-y-2"
+    className: "flex gap-2"
   }, /*#__PURE__*/React.createElement(Btn, {
-    onClick: onRetake
-  }, "RETAKE"), /*#__PURE__*/React.createElement(Btn, {
     variant: "ghost",
-    onClick: onAccept
-  }, "USE PHOTO ANYWAY")) : /*#__PURE__*/React.createElement("div", {
+    onClick: onAccept,
+    className: "!w-[38%] !h-16 !text-[13px] leading-tight"
+  }, "USE ANYWAY"), /*#__PURE__*/React.createElement(Btn, {
+    onClick: onRetake,
+    className: "!w-[62%]"
+  }, "RETAKE")) : /*#__PURE__*/React.createElement("div", {
     className: "flex gap-2"
   }, /*#__PURE__*/React.createElement(Btn, {
     variant: "ghost",
@@ -3081,7 +3141,8 @@ function UploadSuccess({
   }, /*#__PURE__*/React.createElement(CustomerReferencePhoto, {
     c: customer,
     className: "w-12 h-12 flex-none",
-    radius: 12
+    radius: 12,
+    compact: true
   }), /*#__PURE__*/React.createElement("div", {
     className: "min-w-0"
   }, /*#__PURE__*/React.createElement(Label, null, "Customer"), /*#__PURE__*/React.createElement("div", {
@@ -3371,7 +3432,7 @@ function Home({
     s: 16
   }), /*#__PURE__*/React.createElement("span", null, "Dashboard")), !PILOT && /*#__PURE__*/React.createElement("button", {
     onClick: () => go('story'),
-    className: "tap flex-1 h-12 rounded-xl bg-paper border border-line text-[12.5px] font-bold text-ink2 flex items-center justify-center gap-2"
+    className: "tap flex-1 h-11 rounded-xl bg-paper border border-line text-[12.5px] font-bold text-ink2 flex items-center justify-center gap-2"
   }, "Why this changes"))));
 }
 
@@ -3656,7 +3717,7 @@ function CustomerSearch({
     mode: "search",
     onSelect: onSelect
   }), c.phone && /*#__PURE__*/React.createElement("div", {
-    className: "mono text-[10.5px] text-muted mt-1 ml-[94px]"
+    className: "mono text-[10.5px] text-muted mt-1 ml-[91px]"
   }, "phone \u2022\u2022\u2022\u2022 ", c.phone)))))));
 }
 
@@ -4221,7 +4282,8 @@ function PhotoSession({
   }), /*#__PURE__*/React.createElement(CustomerReferencePhoto, {
     c: customer,
     className: "w-9 h-9 flex-none",
-    radius: 9
+    radius: 9,
+    compact: true
   }), /*#__PURE__*/React.createElement("div", {
     className: "min-w-0 flex-1"
   }, /*#__PURE__*/React.createElement("div", {
@@ -4664,7 +4726,9 @@ function Login({
     className: "text-[22px] font-extrabold leading-tight"
   }, "Sign in to Photo Flow"), /*#__PURE__*/React.createElement("p", {
     className: "text-[13px] text-muted mt-2 leading-snug"
-  }, "Use your own account. Ask an admin if you don\u2019t have one yet."), /*#__PURE__*/React.createElement(Field, {
+  }, "Use your own account. Ask an admin if you don\u2019t have one yet."), /*#__PURE__*/React.createElement("div", {
+    className: "mt-5 space-y-3"
+  }, /*#__PURE__*/React.createElement(Field, {
     label: "Username"
   }, /*#__PURE__*/React.createElement("input", {
     className: "keyin mt-1",
@@ -4685,7 +4749,7 @@ function Login({
     onKeyDown: e => {
       if (e.key === 'Enter') submit();
     }
-  })), err && /*#__PURE__*/React.createElement("p", {
+  }))), err && /*#__PURE__*/React.createElement("p", {
     className: "text-[12px] text-warn font-bold mt-2"
   }, err)), /*#__PURE__*/React.createElement(Dock, null, /*#__PURE__*/React.createElement(Btn, {
     onClick: submit,

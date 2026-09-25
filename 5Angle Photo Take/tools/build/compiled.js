@@ -239,7 +239,9 @@ function CustomerReferencePhoto({
   off = 0,
   className = '',
   radius = 18,
-  muted = false
+  muted = false,
+  compact = false,
+  short = false
 }) {
   if (c && REF_SRC[c.id] && off === 0) {
     return /*#__PURE__*/React.createElement("img", {
@@ -258,7 +260,9 @@ function CustomerReferencePhoto({
   if (c && c.live) return /*#__PURE__*/React.createElement(LiveReference, {
     c: c,
     className: className,
-    radius: radius
+    radius: radius,
+    compact: compact,
+    short: short
   });
   if (c) seed = c.seed || 0;
   const s = seed % 6,
@@ -438,7 +442,9 @@ function loadReference(id) {
 function LiveReference({
   c,
   className,
-  radius
+  radius,
+  compact,
+  short
 }) {
   const [st, setSt] = useState({
     loading: true,
@@ -479,10 +485,10 @@ function LiveReference({
   }, !st.loading && /*#__PURE__*/React.createElement("div", {
     className: "flex flex-col items-center"
   }, /*#__PURE__*/React.createElement(Icon.cam, {
-    s: 20
-  }), /*#__PURE__*/React.createElement("span", {
+    s: compact ? 16 : 20
+  }), !compact && /*#__PURE__*/React.createElement("span", {
     className: "mono text-[8px] font-bold track mt-1 text-center"
-  }, "NO PHOTO YET")));
+  }, short ? 'NO PHOTO' : 'NO PHOTO YET')));
 }
 
 /* ============================== PRIMITIVES ============================== */
@@ -685,9 +691,9 @@ function StatusPill({
 function StatusBar({
   dark = false
 }) {
-  const c = dark ? 'text-white/85' : 'text-ink/75';
+  const c = dark ? 'text-white/85 bg-ink' : 'text-ink/75';
   return /*#__PURE__*/React.createElement("div", {
-    className: `flex items-center justify-between px-6 pt-2.5 pb-1 text-[11px] font-semibold ${c} mono flex-none`
+    className: `sbar flex items-center justify-between px-6 pt-2.5 pb-1 text-[11px] font-semibold ${c} mono flex-none`
   }, /*#__PURE__*/React.createElement("span", null, clock()), /*#__PURE__*/React.createElement("div", {
     className: "flex items-center gap-1.5"
   }, /*#__PURE__*/React.createElement("svg", {
@@ -763,9 +769,7 @@ function TopBar({
     onClick: onBack,
     "aria-label": "Back",
     className: `tap w-10 h-10 -ml-1 rounded-xl flex items-center justify-center ${dark ? 'text-white/80 hover:bg-white/10' : 'text-ink2 hover:bg-black/5'}`
-  }, /*#__PURE__*/React.createElement(Icon.back, null)) : /*#__PURE__*/React.createElement("div", {
-    className: "w-2"
-  }), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement(Icon.back, null)) : null, /*#__PURE__*/React.createElement("div", {
     className: "flex-1 min-w-0"
   }, /*#__PURE__*/React.createElement("div", {
     className: `mono track text-[10.5px] font-bold uppercase ${dark ? 'text-brand' : 'text-brandDeep'}`
@@ -777,7 +781,7 @@ function Dock({
   children
 }) {
   return /*#__PURE__*/React.createElement("div", {
-    className: "flex-none px-4 pt-2.5 pb-3 bg-cream/95 backdrop-blur border-t border-line space-y-2"
+    className: "dock flex-none px-4 pt-2.5 pb-3 bg-cream/95 backdrop-blur border-t border-line space-y-2"
   }, children);
 }
 
@@ -798,7 +802,8 @@ function CustomerCard({
   }, /*#__PURE__*/React.createElement(CustomerReferencePhoto, {
     c: c,
     className: "w-[68px] h-[68px]",
-    radius: 14
+    radius: 14,
+    short: true
   }), /*#__PURE__*/React.createElement("span", {
     className: "mono absolute -bottom-1.5 left-1/2 -translate-x-1/2 bg-ink text-white text-[8px] font-semibold px-1.5 py-[2px] rounded track"
   }, "REF")), /*#__PURE__*/React.createElement("div", {
@@ -2044,7 +2049,23 @@ function LiveCamera({
       padding: '4px 8px',
       borderRadius: 6
     }
-  }, guide ? angle.n + ' / 5 · ' : '', angle.full), !dims && !err && /*#__PURE__*/React.createElement("div", {
+  }, guide ? angle.n + ' / 5 · ' : '', angle.full), dims && angle && angle.hint && /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      bottom: 0,
+      padding: '28px 12px 12px',
+      textAlign: 'center',
+      background: 'linear-gradient(to top, rgba(0,0,0,.6), rgba(0,0,0,0))'
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: '#fff',
+      fontSize: 13,
+      fontWeight: 700
+    }
+  }, angle.hint)), !dims && !err && /*#__PURE__*/React.createElement("div", {
     className: "mono",
     style: {
       position: 'absolute',
@@ -2231,8 +2252,9 @@ function CameraCapture({
     style: {
       background: 'radial-gradient(120% 90% at 50% 20%, #3A332B 0%, #16130F 75%)'
     }
-  }, /*#__PURE__*/React.createElement(AngleGuide, {
-    angle: angle
+  }, /*#__PURE__*/React.createElement(GridLines, null), /*#__PURE__*/React.createElement(AngleGuide, {
+    angle: angle,
+    grid: false
   })), /*#__PURE__*/React.createElement("div", {
     className: "absolute top-3 left-3 right-3 flex items-start justify-between"
   }, /*#__PURE__*/React.createElement("span", {
@@ -2301,12 +2323,18 @@ function QualityCheck({
   const failed = checks ? checks.filter(c => !c.ok) : [];
   return /*#__PURE__*/React.createElement("div", {
     className: "space-y-3"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "mx-auto",
+    style: {
+      width: '100%',
+      maxWidth: '33vh'
+    }
   }, /*#__PURE__*/React.createElement(PhotoPreview, {
     photo: photo,
     className: "ratio ratio-1x1",
     radius: 24,
     full: true
-  }), /*#__PURE__*/React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     className: `rounded-2xl border p-3 ${done && failed.length ? 'bg-warnSoft border-warn/30' : 'bg-paper border-line'}`
   }, /*#__PURE__*/React.createElement("div", {
     className: "flex items-center gap-1.5 mb-2.5"
@@ -2339,13 +2367,15 @@ function QualityCheck({
   })), done && failed.length > 0 && /*#__PURE__*/React.createElement("p", {
     className: "pop mt-3 text-[13px] font-bold text-warn leading-snug"
   }, failed.length === 1 ? failed[0].bad + '. Please retake.' : 'Photo may be unclear. Please retake.')), done ? failed.length > 0 ? /*#__PURE__*/React.createElement("div", {
-    className: "space-y-2"
+    className: "flex gap-2"
   }, /*#__PURE__*/React.createElement(Btn, {
-    onClick: onRetake
-  }, "RETAKE"), /*#__PURE__*/React.createElement(Btn, {
     variant: "ghost",
-    onClick: onAccept
-  }, "USE PHOTO ANYWAY")) : /*#__PURE__*/React.createElement("div", {
+    onClick: onAccept,
+    className: "!w-[38%] !h-16 !text-[13px] leading-tight"
+  }, "USE ANYWAY"), /*#__PURE__*/React.createElement(Btn, {
+    onClick: onRetake,
+    className: "!w-[62%]"
+  }, "RETAKE")) : /*#__PURE__*/React.createElement("div", {
     className: "flex gap-2"
   }, /*#__PURE__*/React.createElement(Btn, {
     variant: "ghost",
@@ -2613,7 +2643,8 @@ function UploadSuccess({
   }, /*#__PURE__*/React.createElement(CustomerReferencePhoto, {
     c: customer,
     className: "w-12 h-12 flex-none",
-    radius: 12
+    radius: 12,
+    compact: true
   }), /*#__PURE__*/React.createElement("div", {
     className: "min-w-0"
   }, /*#__PURE__*/React.createElement(Label, null, "Customer"), /*#__PURE__*/React.createElement("div", {
@@ -2903,7 +2934,7 @@ function Home({
     s: 16
   }), /*#__PURE__*/React.createElement("span", null, "Dashboard")), !PILOT && /*#__PURE__*/React.createElement("button", {
     onClick: () => go('story'),
-    className: "tap flex-1 h-12 rounded-xl bg-paper border border-line text-[12.5px] font-bold text-ink2 flex items-center justify-center gap-2"
+    className: "tap flex-1 h-11 rounded-xl bg-paper border border-line text-[12.5px] font-bold text-ink2 flex items-center justify-center gap-2"
   }, "Why this changes"))));
 }
 
@@ -3188,7 +3219,7 @@ function CustomerSearch({
     mode: "search",
     onSelect: onSelect
   }), c.phone && /*#__PURE__*/React.createElement("div", {
-    className: "mono text-[10.5px] text-muted mt-1 ml-[94px]"
+    className: "mono text-[10.5px] text-muted mt-1 ml-[91px]"
   }, "phone \u2022\u2022\u2022\u2022 ", c.phone)))))));
 }
 
@@ -3753,7 +3784,8 @@ function PhotoSession({
   }), /*#__PURE__*/React.createElement(CustomerReferencePhoto, {
     c: customer,
     className: "w-9 h-9 flex-none",
-    radius: 9
+    radius: 9,
+    compact: true
   }), /*#__PURE__*/React.createElement("div", {
     className: "min-w-0 flex-1"
   }, /*#__PURE__*/React.createElement("div", {
@@ -4196,7 +4228,9 @@ function Login({
     className: "text-[22px] font-extrabold leading-tight"
   }, "Sign in to Photo Flow"), /*#__PURE__*/React.createElement("p", {
     className: "text-[13px] text-muted mt-2 leading-snug"
-  }, "Use your own account. Ask an admin if you don\u2019t have one yet."), /*#__PURE__*/React.createElement(Field, {
+  }, "Use your own account. Ask an admin if you don\u2019t have one yet."), /*#__PURE__*/React.createElement("div", {
+    className: "mt-5 space-y-3"
+  }, /*#__PURE__*/React.createElement(Field, {
     label: "Username"
   }, /*#__PURE__*/React.createElement("input", {
     className: "keyin mt-1",
@@ -4217,7 +4251,7 @@ function Login({
     onKeyDown: e => {
       if (e.key === 'Enter') submit();
     }
-  })), err && /*#__PURE__*/React.createElement("p", {
+  }))), err && /*#__PURE__*/React.createElement("p", {
     className: "text-[12px] text-warn font-bold mt-2"
   }, err)), /*#__PURE__*/React.createElement(Dock, null, /*#__PURE__*/React.createElement(Btn, {
     onClick: submit,

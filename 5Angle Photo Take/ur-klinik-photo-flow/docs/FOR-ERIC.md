@@ -28,6 +28,22 @@ face guide for the current angle drawn over the live picture. Big white button t
   **IMPORT FROM PHOTOS** still works exactly as before.
 - Nothing to configure, no server change — only `app\index.html` changed.
 
+**Also in this build — layout clean-up on every screen** (checked screen by screen at iPhone 6 size):
+- The fake phone status bar (clock, signal, battery) drawn at the top of the app is gone on real
+  phones — iOS already shows its own, so there were two clocks. On the dark screens the fake
+  clock was also invisible. Buttons at the bottom now stay clear of the home bar on newer iPhones.
+- The search boxes had a stray black box inside them; gone.
+- Text blocks had extra hidden spacing (icon and text out of line, gaps under paragraphs); fixed.
+- The × to remove an extra photo now sits on the photo's corner, not under it.
+- Thumbnails of extra photos no longer touch each other.
+- "NO PHOTO YET" no longer spills out of small avatars or runs into the REF tag.
+- ID chip / appointment time / "Last visit" line up when they wrap to a second line.
+- Sign-in: even spacing between Username and Password; title lines up with the page.
+- Confirm screen: BEFORE / AFTER is fully visible without scrolling on an iPhone 6.
+- Photo check screen: RETAKE / NEXT (or USE ANYWAY) are on screen without scrolling.
+- The yellow and green main buttons have their pressed-down 3D edge back.
+- Membership ID with an error now shows the red border it was meant to.
+
 ---
 
 ## 🔴 Update of 25 Sep — photos are never lost again

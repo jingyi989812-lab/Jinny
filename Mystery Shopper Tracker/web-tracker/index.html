@@ -1,0 +1,844 @@
+<title>Mystery Shopper Improvement Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: a QA action board. Summary tiles on top, filters, then one card per improvement point; a side panel holds the full record and its follow-up log. */
+:root {
+  --bg: #F3F5F7;
+  --surface: #FFFFFF;
+  --surface-2: #EEF1F4;
+  --ink: #17202C;
+  --muted: #5B6575;
+  --line: #DCE1E8;
+  --accent: #0F6B6E;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #DDF0EE;
+  --focus: #2B7CB8;
+
+  --open: #B9460F;       --open-bg: #FCE9DC;
+  --prog: #1E5CB8;       --prog-bg: #E2EBFA;
+  --mon: #7042B3;        --mon-bg: #EEE6FA;
+  --ver: #0C7552;        --ver-bg: #DBF2E7;
+  --closed: #5D6878;     --closed-bg: #E6E9EE;
+  --over: #BF1D2A;       --over-bg: #FBE2E4;
+
+  --shadow: 0 1px 2px rgba(23, 32, 44, .06), 0 2px 8px rgba(23, 32, 44, .05);
+  --font-ui: "Onest", "Segoe UI", system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --r: 12px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0F141A; --surface: #171E26; --surface-2: #1F2731; --ink: #E6EBF1; --muted: #9AA5B4; --line: #2B3542;
+    --accent: #43B7AF; --accent-ink: #06201E; --accent-soft: #173B39; --focus: #6CB4E8;
+    --open: #F2A36E; --open-bg: #3A2416; --prog: #86AEF0; --prog-bg: #1C2A44; --mon: #BE9CF0; --mon-bg: #2C2140;
+    --ver: #6BD3A5; --ver-bg: #15342A; --closed: #A5AFBD; --closed-bg: #262E39; --over: #F28A92; --over-bg: #3E1B20;
+    --shadow: 0 1px 2px rgba(0,0,0,.4);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0F141A; --surface: #171E26; --surface-2: #1F2731; --ink: #E6EBF1; --muted: #9AA5B4; --line: #2B3542;
+  --accent: #43B7AF; --accent-ink: #06201E; --accent-soft: #173B39; --focus: #6CB4E8;
+  --open: #F2A36E; --open-bg: #3A2416; --prog: #86AEF0; --prog-bg: #1C2A44; --mon: #BE9CF0; --mon-bg: #2C2140;
+  --ver: #6BD3A5; --ver-bg: #15342A; --closed: #A5AFBD; --closed-bg: #262E39; --over: #F28A92; --over-bg: #3E1B20;
+  --shadow: 0 1px 2px rgba(0,0,0,.4);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-ui); font-size: 14px; line-height: 1.45; }
+.wrap { max-width: 1240px; margin: 0 auto; padding-inline: 20px; padding-block: 20px 60px; display: grid; gap: 18px; }
+@media (max-width: 560px) { .wrap { padding-inline: 16px; } }
+h1, h2, h3 { margin: 0; text-wrap: balance; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.mono { font-family: var(--font-mono); font-size: 12px; letter-spacing: .02em; }
+.muted { color: var(--muted); }
+
+/* ---------- header ---------- */
+.top { display: flex; flex-wrap: wrap; gap: 14px 24px; align-items: flex-end; justify-content: space-between; }
+.eyebrow { font-size: 11.5px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: var(--accent); }
+.top h1 { font-size: clamp(22px, 3.2vw, 30px); font-weight: 700; letter-spacing: -.01em; margin-top: 2px; }
+.flow { display: flex; flex-wrap: wrap; gap: 4px; margin: 10px 0 0; padding: 0; list-style: none; }
+.flow li { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+.flow li:not(:last-child)::after { content: "→"; color: var(--muted); font-weight: 700; margin-left: 2px; }
+.flow li span { background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 2px 9px; }
+.top-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 9px 14px; font-weight: 600; font-size: 13.5px; }
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.primary:hover { filter: brightness(1.07); }
+.btn.small { padding: 6px 10px; font-size: 12.5px; border-radius: 8px; }
+.btn.danger { color: var(--over); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+
+.banner { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; color: var(--muted); }
+.banner strong { color: var(--ink); }
+
+/* ---------- tiles ---------- */
+.tiles { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 860px) { .tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.tile { text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; display: grid; gap: 2px; box-shadow: var(--shadow); }
+.tile .n { font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.tile .l { font-size: 12.5px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.tile .l::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.tile[aria-pressed="true"] { border-color: currentColor; box-shadow: 0 0 0 1px currentColor inset; }
+.t-open { color: var(--open); } .t-prog { color: var(--prog); } .t-mon { color: var(--mon); }
+.t-over { color: var(--over); } .t-ver { color: var(--ver); } .t-closed { color: var(--closed); }
+.tile .n { color: var(--ink); }
+.tile.t-over.has .n { color: var(--over); }
+
+/* ---------- breakdown ---------- */
+.breakdown { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 860px) { .breakdown { grid-template-columns: 1fr; } }
+.bd { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; min-width: 0; }
+.bd h2 { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 8px; }
+.bd ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.bd button { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; background: none; border: 0; padding: 5px 6px; border-radius: 7px; text-align: left; }
+.bd button:hover { background: var(--surface-2); }
+.bd .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bd .cnt { font-weight: 700; font-variant-numeric: tabular-nums; min-width: 26px; text-align: center; background: var(--surface-2); border-radius: 999px; padding: 0 8px; }
+.bd .none { color: var(--muted); font-size: 13px; padding: 4px 6px; }
+
+/* ---------- toolbar ---------- */
+.toolbar { display: grid; gap: 10px; }
+.tabs { display: inline-flex; background: var(--surface-2); border-radius: 10px; padding: 3px; gap: 3px; width: max-content; max-width: 100%; }
+.tabs button { border: 0; background: none; border-radius: 8px; padding: 7px 12px; font-weight: 600; font-size: 13px; color: var(--muted); }
+.tabs button[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+.filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.filters input, .filters select { background: var(--surface); border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px; font-size: 13px; min-width: 0; }
+.filters input[type="search"] { flex: 1 1 220px; }
+.filters select { flex: 0 1 auto; max-width: 100%; }
+.filters .clear { background: none; border: 0; color: var(--accent); font-weight: 600; font-size: 13px; padding: 6px; }
+.result-line { font-size: 13px; color: var(--muted); }
+
+/* ---------- cards ---------- */
+.group { display: grid; gap: 10px; }
+.group + .group { margin-top: 14px; }
+.group-head { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; padding: 2px 2px 0; }
+.group-head h2 { font-size: 16px; font-weight: 700; }
+.group-head .sub { font-size: 12.5px; color: var(--muted); }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(330px, 100%), 1fr)); gap: 12px; align-items: start; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px; display: grid; gap: 9px; text-align: left; box-shadow: var(--shadow); min-width: 0; width: 100%; }
+.card:hover { border-color: var(--muted); }
+.card-top { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.card-top .spacer { flex: 1; }
+.chip { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--surface-2); white-space: nowrap; }
+.pill { font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+.s-open { color: var(--open); background: var(--open-bg); }
+.s-prog { color: var(--prog); background: var(--prog-bg); }
+.s-mon { color: var(--mon); background: var(--mon-bg); }
+.s-ver { color: var(--ver); background: var(--ver-bg); }
+.s-closed { color: var(--closed); background: var(--closed-bg); }
+.s-over { color: var(--over); background: var(--over-bg); }
+.card .point { display: block; font-size: 15px; font-weight: 600; line-height: 1.35; }
+.card .row { font-size: 13px; display: grid; grid-template-columns: 58px minmax(0, 1fr); gap: 8px; }
+.card .row .k { color: var(--muted); font-weight: 600; font-size: 12px; padding-top: 1px; }
+.card .clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.card .todo { color: var(--muted); font-style: italic; }
+.card-foot { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 9px; }
+.theme-tag { font-weight: 600; color: var(--accent); }
+.theme-tag::before { content: "◆ "; }
+
+.empty { background: var(--surface); border: 1px dashed var(--line); border-radius: var(--r); padding: 28px 20px; text-align: center; color: var(--muted); display: grid; gap: 10px; justify-items: center; }
+.empty strong { color: var(--ink); font-size: 15px; }
+
+/* ---------- summary table ---------- */
+.summary-intro { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; display: grid; gap: 6px; }
+.summary-intro h2 { font-size: 17px; }
+.summary-stats { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--muted); }
+.summary-stats b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
+table { border-collapse: collapse; width: 100%; min-width: 820px; font-size: 13px; }
+th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+th { font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); background: var(--surface-2); font-weight: 600; }
+tr.grp td { background: var(--surface-2); font-weight: 700; font-size: 13px; }
+tbody tr.item { cursor: pointer; }
+tbody tr.item:hover td { background: color-mix(in srgb, var(--surface-2) 55%, transparent); }
+td .sm { font-size: 12px; color: var(--muted); margin-top: 3px; }
+td .pt { font-weight: 600; }
+
+/* ---------- drawer ---------- */
+.scrim { position: fixed; inset: 0; background: rgba(10, 14, 20, .38); z-index: 20; }
+.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(620px, 100%); background: var(--bg); z-index: 21; display: flex; flex-direction: column; box-shadow: -8px 0 30px rgba(0,0,0,.18); }
+.drawer-head { background: var(--surface); border-bottom: 1px solid var(--line); padding: calc(14px + env(safe-area-inset-top, 0px)) 18px 12px; display: grid; gap: 8px; }
+.drawer-head .line1 { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.drawer-head .spacer { flex: 1; }
+.x { border: 0; background: var(--surface-2); width: 34px; height: 34px; border-radius: 9px; font-size: 18px; line-height: 1; }
+.drawer-body { overflow-y: auto; padding: 16px 18px calc(28px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 14px; align-content: start; }
+.sec { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px; display: grid; gap: 10px; }
+.sec h3 { font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.sec h3 .q { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-size: 11px; font-weight: 700; flex: none; }
+.field { display: grid; gap: 4px; min-width: 0; }
+.field > label, .field > .lbl { font-size: 12px; font-weight: 600; color: var(--muted); }
+.field input, .field select, .field textarea { width: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px; font-size: 13.5px; }
+.field textarea { resize: vertical; min-height: 64px; line-height: 1.45; }
+.field .hint { font-size: 11.5px; color: var(--muted); }
+.field.big textarea { font-size: 14.5px; font-weight: 600; min-height: 58px; }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 480px) { .grid2 { grid-template-columns: 1fr; } }
+.seg { display: flex; flex-wrap: wrap; gap: 6px; }
+.seg button { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 11px; font-size: 12.5px; font-weight: 600; color: var(--muted); }
+.seg button[aria-pressed="true"].s-open, .seg button[aria-pressed="true"].s-prog, .seg button[aria-pressed="true"].s-mon,
+.seg button[aria-pressed="true"].s-ver, .seg button[aria-pressed="true"].s-closed { border-color: currentColor; }
+.seg button:not([aria-pressed="true"]) { background: var(--surface); color: var(--muted); }
+.seg.views button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.note { font-size: 12.5px; color: var(--muted); background: var(--surface-2); border-radius: 9px; padding: 8px 10px; }
+.log { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.log li { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: grid; gap: 4px; font-size: 13px; }
+.log li.ev { border-style: dashed; color: var(--muted); font-size: 12.5px; padding: 7px 12px; }
+.log .lh { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; font-size: 12px; color: var(--muted); }
+.log .lh b { color: var(--ink); }
+.log .kv { display: grid; grid-template-columns: 70px minmax(0, 1fr); gap: 8px; }
+.log .kv span:first-child { color: var(--muted); font-size: 12px; font-weight: 600; }
+.fu-form { border-top: 1px solid var(--line); padding-top: 12px; display: grid; gap: 10px; }
+.actions-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.dates { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 12.5px; color: var(--muted); }
+.dates b { color: var(--ink); font-weight: 600; }
+.confirm { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 13px; }
+
+/* ---------- modal ---------- */
+.modal { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; padding: 16px; }
+.modal .scrim { z-index: 0; }
+.modal .box { z-index: 1; position: relative; background: var(--bg); width: min(640px, 100%); max-height: calc(100% - 20px); overflow-y: auto; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,.25); display: grid; gap: 12px; padding: 18px; }
+.modal .box h2 { font-size: 18px; }
+.modal .req { color: var(--over); }
+.form-err { color: var(--over); font-size: 13px; font-weight: 600; }
+
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-weight: 600; font-size: 13.5px; z-index: 40; box-shadow: 0 8px 24px rgba(0,0,0,.2); max-width: calc(100% - 32px); }
+.ro-badge { font-size: 12px; font-weight: 600; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; }
+@media (prefers-reduced-motion: no-preference) {
+  .drawer { animation: slide .18s ease-out; }
+  @keyframes slide { from { transform: translateX(24px); opacity: .6; } to { transform: none; opacity: 1; } }
+}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">UR Klinik · QA</div>
+      <h1>Mystery Shopper Improvement Tracker</h1>
+      <ol class="flow" aria-label="Workflow">
+        <li><span>MS feedback</span></li><li><span>Improvement point</span></li><li><span>Action plan</span></li><li><span>PIC</span></li>
+        <li><span>Timeline</span></li><li><span>Follow-up</span></li><li><span>Verify</span></li><li><span>Close</span></li>
+      </ol>
+    </div>
+    <div class="top-actions">
+      <span id="roBadge" class="ro-badge" hidden>View only</span>
+      <button id="btnExport" class="btn" hidden>Download Excel</button>
+      <button id="btnNew" class="btn primary">+ New improvement point</button>
+    </div>
+  </header>
+
+  <div id="banner" class="banner" hidden></div>
+
+  <section class="tiles" id="tiles" aria-label="Status summary"></section>
+
+  <section class="breakdown" id="breakdown" aria-label="Not yet verified, by outlet, category and PIC"></section>
+
+  <section class="toolbar">
+    <div class="tabs" role="tablist">
+      <button role="tab" id="tabCards" aria-selected="true">Action cards</button>
+      <button role="tab" id="tabSummary" aria-selected="false">Summary for Dr. Shen</button>
+    </div>
+    <div class="filters">
+      <input type="search" id="fQ" placeholder="Search feedback, action, PIC…" aria-label="Search">
+      <select id="fOutlet" aria-label="Outlet"></select>
+      <select id="fCategory" aria-label="Category"></select>
+      <select id="fPic" aria-label="PIC"></select>
+      <select id="fStatus" aria-label="Status"></select>
+      <select id="fGroup" aria-label="Group by">
+        <option value="none">No grouping</option>
+        <option value="theme">Group by theme</option>
+        <option value="category">Group by category</option>
+        <option value="outlet">Group by outlet</option>
+        <option value="pic">Group by PIC</option>
+      </select>
+      <button class="clear" id="fClear" hidden>Clear filters</button>
+    </div>
+    <div class="result-line" id="resultLine"></div>
+  </section>
+
+  <main id="list">
+    <div class="empty"><strong>Loading improvement points…</strong><span>Each Mystery Shopper improvement point appears here as a card with its action plan, PIC and target date.</span></div>
+  </main>
+</div>
+
+<!-- detail drawer -->
+<div id="scrim" class="scrim" hidden></div>
+<aside id="drawer" class="drawer" hidden aria-label="Improvement point details">
+  <div class="drawer-head">
+    <div class="line1">
+      <span class="mono" id="dCode"></span>
+      <span class="chip" id="dOutletChip"></span>
+      <span class="pill" id="dStatusPill"></span>
+      <span class="pill s-over" id="dOverPill" hidden></span>
+      <span class="spacer"></span>
+      <button class="x" id="dClose" aria-label="Close">×</button>
+    </div>
+    <div class="dates" id="dDates"></div>
+  </div>
+  <div class="drawer-body">
+    <section class="sec">
+      <h3><span class="q">1</span>What is the problem?</h3>
+      <div class="field big"><label for="d_point">Improvement point</label><textarea id="d_point" data-field="point" rows="2"></textarea></div>
+      <div class="field"><label for="d_feedback">Mystery Shopper feedback (what the customer said)</label><textarea id="d_feedback" data-field="feedback" rows="3"></textarea></div>
+      <div class="grid2">
+        <div class="field"><label for="d_date">Date</label><input type="date" id="d_date" data-field="date"></div>
+        <div class="field"><label for="d_outlet">Outlet</label><input id="d_outlet" data-field="outlet" list="dlOutlets"></div>
+        <div class="field"><label for="d_category">Improvement category</label><select id="d_category" data-field="category"></select></div>
+        <div class="field"><label for="d_theme">Improvement theme <span class="muted">(links related cases)</span></label><input id="d_theme" data-field="theme" list="dlThemes" placeholder="e.g. Consultant Sales Approach"></div>
+      </div>
+    </section>
+
+    <section class="sec">
+      <h3><span class="q">2</span>What action will be taken?</h3>
+      <div class="field"><label for="d_action">Action plan</label><textarea id="d_action" data-field="action" rows="3"></textarea></div>
+      <div class="grid2">
+        <div class="field"><label for="d_pic">Who is responsible? (PIC)</label><input id="d_pic" data-field="pic" list="dlPics"></div>
+        <div class="field"><label for="d_target">When should it be improved? (target date)</label><input type="date" id="d_target" data-field="target"><span class="hint">Leave empty until the QA meeting decides.</span></div>
+      </div>
+      <div class="field"><span class="lbl">Status</span><div class="seg" id="dStatusSeg"></div></div>
+    </section>
+
+    <section class="sec">
+      <h3><span class="q">3</span>Follow-up</h3>
+      <ul class="log" id="dLog"></ul>
+      <div class="fu-form" id="fuForm">
+        <div class="grid2">
+          <div class="field"><label for="fu_date">When was it taken?</label><input type="date" id="fu_date"></div>
+          <div class="field"><label for="fu_evidence">What evidence do we have?</label><input id="fu_evidence" placeholder="e.g. briefing attendance, updated script"></div>
+        </div>
+        <div class="field"><label for="fu_action">What action was taken?</label><textarea id="fu_action" rows="2" placeholder="e.g. Outlet manager briefed all consultants on needs-based selling"></textarea></div>
+        <div class="field"><span class="lbl">Does QA think the issue is improved?</span>
+          <div class="seg views" id="fuView">
+            <button type="button" data-v="Improved" aria-pressed="false">Improved</button>
+            <button type="button" data-v="Partly improved" aria-pressed="false">Partly improved</button>
+            <button type="button" data-v="Not yet" aria-pressed="false">Not yet</button>
+            <button type="button" data-v="Too early to tell" aria-pressed="false">Too early to tell</button>
+          </div>
+        </div>
+        <div class="actions-row"><button class="btn primary small" id="fuAdd">Save follow-up</button><span class="form-err" id="fuErr" hidden></span></div>
+      </div>
+    </section>
+
+    <section class="sec">
+      <h3><span class="q">4</span>Has QA verified it?</h3>
+      <div class="field"><label for="d_verifyHow">How QA will verify</label><textarea id="d_verifyHow" data-field="verifyHow" rows="2" placeholder="e.g. Review the next Mystery Shopper report for this outlet"></textarea></div>
+      <div class="field"><label for="d_verifyResult">Verification result</label><textarea id="d_verifyResult" data-field="verifyResult" rows="2" placeholder="e.g. Oct 2026 MS report: no sales pressure mentioned"></textarea></div>
+      <div class="actions-row" id="verifyActions"></div>
+      <div id="reopenBox" hidden class="fu-form">
+        <div class="field"><label for="reopen_reason">Where was the issue seen again?</label><input id="reopen_reason" placeholder="e.g. Nov 2026 MS report, Greenlane"></div>
+        <div class="actions-row"><button class="btn small primary" id="reopenGo">Reopen</button><button class="btn small" id="reopenCancel">Cancel</button></div>
+      </div>
+    </section>
+
+    <section class="sec">
+      <h3>Remarks</h3>
+      <div class="field"><textarea id="d_remarks" data-field="remarks" rows="2" aria-label="Remarks"></textarea></div>
+    </section>
+
+    <div class="actions-row" id="deleteRow">
+      <button class="btn small danger" id="delAsk">Delete this point</button>
+      <span class="confirm" id="delConfirm" hidden>Delete permanently? <button class="btn small danger" id="delYes">Yes, delete</button><button class="btn small" id="delNo">Cancel</button></span>
+    </div>
+  </div>
+</aside>
+
+<!-- new point modal -->
+<div id="modal" class="modal" hidden>
+  <div class="scrim" id="modalScrim"></div>
+  <form class="box" id="newForm" novalidate>
+    <h2>New improvement point</h2>
+    <div class="grid2">
+      <div class="field"><label for="n_outlet">Outlet <span class="req">*</span></label><input id="n_outlet" list="dlOutlets" autocomplete="off"></div>
+      <div class="field"><label for="n_date">Date</label><input type="date" id="n_date"></div>
+    </div>
+    <div class="field"><label for="n_feedback">Mystery Shopper feedback</label><textarea id="n_feedback" rows="3" placeholder="What did the customer say?"></textarea></div>
+    <div class="field"><label for="n_point">Improvement point <span class="req">*</span></label><textarea id="n_point" rows="2" placeholder="What is the problem we need to improve?"></textarea></div>
+    <div class="grid2">
+      <div class="field"><label for="n_category">Improvement category <span class="req">*</span></label><select id="n_category"></select></div>
+      <div class="field"><label for="n_theme">Improvement theme (optional)</label><input id="n_theme" list="dlThemes" placeholder="Links similar cases"></div>
+    </div>
+    <div class="field"><label for="n_action">Action plan</label><textarea id="n_action" rows="2" placeholder="Can be added at the QA meeting"></textarea></div>
+    <div class="grid2">
+      <div class="field"><label for="n_pic">PIC</label><input id="n_pic" list="dlPics"></div>
+      <div class="field"><label for="n_target">Target date</label><input type="date" id="n_target"></div>
+    </div>
+    <div class="form-err" id="nErr" hidden></div>
+    <div class="actions-row"><button class="btn primary" type="submit" id="nSave">Add improvement point</button><button class="btn" type="button" id="nCancel">Cancel</button></div>
+  </form>
+</div>
+
+<datalist id="dlOutlets"></datalist>
+<datalist id="dlThemes"></datalist>
+<datalist id="dlPics"></datalist>
+<div id="toast" class="toast" hidden role="status"></div>
+
+<script>
+(() => {
+  "use strict";
+  const CATS = ["Sales / Consultation", "Communication", "Treatment Explanation", "Customer Experience", "Waiting Time", "Hygiene / SOP", "Follow-up", "Pricing / Package Explanation"];
+  const STATUSES = ["Open", "Action in Progress", "Monitoring", "Verified", "Closed"];
+  const SCLASS = { "Open": "s-open", "Action in Progress": "s-prog", "Monitoring": "s-mon", "Verified": "s-ver", "Closed": "s-closed" };
+  const OUTLETS = ["Greenlane", "Puchong", "Cheras Leisure Mall"];
+  const OUTLET_CODES = { "Greenlane": "GL", "Puchong": "PC", "Cheras Leisure Mall": "CLM" };
+  const PIC_DEFAULTS = ["Outlet Manager", "Consultant / Outlet Manager", "Front Desk / CS", "Doctor", "Therapist Lead", "QA"];
+  const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const ACTIVE = ["Open", "Action in Progress", "Monitoring"];
+
+  const $ = (s, el = document) => el.querySelector(s);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const today = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+  const fmt = (s) => { if (!s || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return ""; const [y, m, d] = s.split("-"); return `${+d} ${MONTHS[+m - 1]} ${y}`; };
+  const dayDiff = (a, b) => Math.round((Date.parse(b + "T00:00:00") - Date.parse(a + "T00:00:00")) / 86400000);
+  const rid = () => Math.random().toString(36).slice(2, 10);
+  const isOverdue = (it) => !!it.target && it.target < today() && !["Verified", "Closed"].includes(it.status);
+  const lastFU = (it) => { const l = (it.log || []).filter((e) => e.kind === "followup"); if (!l.length) return null; return l.slice().sort((a, b) => (a.date || "").localeCompare(b.date || ""))[l.length - 1]; };
+
+  const state = {
+    items: [], loaded: false, db: undefined, col: null, user: null, dl: null, meId: null, canWrite: true,
+    f: { q: "", outlet: "", category: "", pic: "", status: "", group: "none" }, view: "cards", openId: null, fuView: "",
+  };
+  try { const s = JSON.parse(localStorage.getItem("msTrackerPrefs") || "null"); if (s) { Object.assign(state.f, s.f || {}); state.view = s.view || "cards"; } } catch (e) {}
+  const savePrefs = () => { try { localStorage.setItem("msTrackerPrefs", JSON.stringify({ f: state.f, view: state.view })); } catch (e) {} };
+
+  // ---------------- toast ----------------
+  let toastT;
+  function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, 2600); }
+
+  // ---------------- writes (serialized per document) ----------------
+  const chains = {};
+  function onWriteError(e) {
+    const code = e && e.code;
+    if (code === "invalid_argument") { setReadOnly(true); toast("You can view this tracker but not change it."); }
+    else if (code === "quota_exceeded") toast("The tracker is full. Delete old closed points to add more.");
+    else if (code === "revoked") toast("Access to this tracker changed. Reload the page.");
+    else toast("Could not save. Check your connection and try again.");
+  }
+  function enqueue(id, fn) { const next = (chains[id] || Promise.resolve()).then(fn).catch(onWriteError); chains[id] = next; return next; }
+  function savePatch(id, patch) { return enqueue(id, () => state.col.doc(id).update({ ...patch, updatedAt: new Date().toISOString() })); }
+  function appendLog(id, entry, patch = {}) {
+    return enqueue(id, async () => {
+      const snap = await state.col.doc(id).get();
+      const cur = snap.exists ? snap.data() : {};
+      const log = [...(cur.log || []), { id: rid(), by: state.meId || "", ...entry }];
+      const extra = typeof patch === "function" ? patch(cur) : patch;
+      await state.col.doc(id).update({ ...extra, log, updatedAt: new Date().toISOString() });
+    });
+  }
+
+  // ---------------- lists & options ----------------
+  function uniq(arr) { return [...new Set(arr.filter(Boolean))]; }
+  function outlets() { return uniq([...OUTLETS, ...state.items.map((i) => i.outlet)]); }
+  function pics() { return uniq([...state.items.map((i) => i.pic), ...PIC_DEFAULTS]); }
+  function themes() { return uniq(state.items.map((i) => i.theme)).sort(); }
+  function fillSelect(sel, opts, value) {
+    sel.innerHTML = opts.map(([v, l]) => `<option value="${esc(v)}">${esc(l)}</option>`).join("");
+    sel.value = value; if (sel.value !== value) sel.value = opts[0][0];
+  }
+  function refreshOptions() {
+    fillSelect($("#fOutlet"), [["", "All outlets"], ...outlets().map((o) => [o, o])], state.f.outlet);
+    const cats = uniq([...CATS, ...state.items.map((i) => i.category)]);
+    fillSelect($("#fCategory"), [["", "All categories"], ...cats.map((c) => [c, c])], state.f.category);
+    const usedPics = uniq(state.items.map((i) => i.pic)).sort();
+    fillSelect($("#fPic"), [["", "All PICs"], ...usedPics.map((p) => [p, p]), ["__none", "No PIC yet"]], state.f.pic);
+    fillSelect($("#fStatus"), [["", "All statuses"], ["active", "Not yet verified"], ...STATUSES.map((s) => [s, s]), ["overdue", "Overdue"]], state.f.status);
+    $("#fGroup").value = state.f.group;
+    $("#fQ").value = state.f.q;
+    $("#dlOutlets").innerHTML = outlets().map((o) => `<option value="${esc(o)}">`).join("");
+    $("#dlThemes").innerHTML = themes().map((t) => `<option value="${esc(t)}">`).join("");
+    $("#dlPics").innerHTML = pics().map((p) => `<option value="${esc(p)}">`).join("");
+    const catOpts = cats.map((c) => `<option value="${esc(c)}">${esc(c)}</option>`).join("");
+    const dc = $("#d_category"); if (document.activeElement !== dc) { const v = dc.value; dc.innerHTML = catOpts; dc.value = v; }
+    const nc = $("#n_category"); if (!nc.options.length) nc.innerHTML = `<option value="">Choose a category</option>` + catOpts;
+  }
+
+  // ---------------- filtering & sorting ----------------
+  function matches(it) {
+    const f = state.f;
+    if (f.outlet && it.outlet !== f.outlet) return false;
+    if (f.category && it.category !== f.category) return false;
+    if (f.pic === "__none" ? !!it.pic : f.pic && it.pic !== f.pic) return false;
+    if (f.status === "overdue") { if (!isOverdue(it)) return false; }
+    else if (f.status === "active") { if (!ACTIVE.includes(it.status)) return false; }
+    else if (f.status && it.status !== f.status) return false;
+    if (f.q) {
+      const hay = [it.code, it.outlet, it.feedback, it.point, it.action, it.pic, it.theme, it.category, it.remarks, it.verifyResult].join(" ").toLowerCase();
+      if (!hay.includes(f.q.toLowerCase())) return false;
+    }
+    return true;
+  }
+  function sortItems(arr) {
+    return arr.slice().sort((a, b) =>
+      (isOverdue(b) - isOverdue(a)) ||
+      (STATUSES.indexOf(a.status) - STATUSES.indexOf(b.status)) ||
+      ((a.target || "9999").localeCompare(b.target || "9999")) ||
+      String(a.code || "").localeCompare(String(b.code || ""), undefined, { numeric: true }));
+  }
+  function groupKey(it) {
+    const g = state.f.group;
+    if (g === "theme") return it.theme || "No theme yet";
+    if (g === "category") return it.category || "No category";
+    if (g === "outlet") return it.outlet || "No outlet";
+    if (g === "pic") return it.pic || "No PIC yet";
+    return "";
+  }
+  function grouped(arr) {
+    if (state.f.group === "none") return [["", arr]];
+    const m = new Map();
+    for (const it of arr) { const k = groupKey(it); if (!m.has(k)) m.set(k, []); m.get(k).push(it); }
+    const last = /^No /;
+    return [...m.entries()].sort((a, b) => (last.test(a[0]) - last.test(b[0])) || b[1].length - a[1].length || a[0].localeCompare(b[0]));
+  }
+
+  // ---------------- render: tiles & breakdown ----------------
+  function renderTiles() {
+    const c = (fn) => state.items.filter(fn).length;
+    const tiles = [
+      ["Open", "Open", "t-open", c((i) => i.status === "Open")],
+      ["Action in Progress", "Action in Progress", "t-prog", c((i) => i.status === "Action in Progress")],
+      ["Monitoring", "Monitoring", "t-mon", c((i) => i.status === "Monitoring")],
+      ["overdue", "Overdue", "t-over", c(isOverdue)],
+      ["Verified", "Verified", "t-ver", c((i) => i.status === "Verified")],
+      ["Closed", "Closed", "t-closed", c((i) => i.status === "Closed")],
+    ];
+    $("#tiles").innerHTML = tiles.map(([k, l, cls, n]) =>
+      `<button class="tile ${cls}${k === "overdue" && n ? " has" : ""}" data-k="${esc(k)}" aria-pressed="${state.f.status === k}">
+         <span class="n">${state.loaded ? n : "–"}</span><span class="l">${esc(l)}</span></button>`).join("");
+  }
+  function renderBreakdown() {
+    const act = state.items.filter((i) => ACTIVE.includes(i.status));
+    const block = (title, key, label) => {
+      const m = new Map();
+      for (const it of act) { const v = it[key] || ""; m.set(v, (m.get(v) || 0) + 1); }
+      const rows = [...m.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+      const body = rows.length
+        ? rows.map(([v, n]) => `<li><button data-key="${key}" data-val="${esc(v || (key === "pic" ? "__none" : ""))}"><span class="name">${esc(v || label)}</span><span class="cnt">${n}</span></button></li>`).join("")
+        : `<li class="none">${state.loaded ? "Nothing open. Well done." : "Loading…"}</li>`;
+      return `<div class="bd"><h2>${esc(title)}</h2><ul>${body}</ul></div>`;
+    };
+    $("#breakdown").innerHTML = block("Not yet verified · by outlet", "outlet", "No outlet") + block("Not yet verified · by category", "category", "No category") + block("Not yet verified · by PIC", "pic", "No PIC yet");
+  }
+
+  // ---------------- render: cards ----------------
+  function cardHTML(it) {
+    const over = isOverdue(it);
+    const fu = lastFU(it);
+    const target = it.target ? `${fmt(it.target)}${over ? ` <span class="pill s-over">Overdue ${dayDiff(it.target, today())} d</span>` : ""}` : `<span class="todo">To decide at QA meeting</span>`;
+    return `<button class="card" data-id="${esc(it.id)}">
+      <span class="card-top"><span class="mono">${esc(it.code || "")}</span><span class="chip">${esc(it.outlet || "No outlet")}</span><span class="spacer"></span><span class="pill ${SCLASS[it.status] || "s-open"}">${esc(it.status || "Open")}</span></span>
+      <span class="point">${esc(it.point || "(no improvement point written)")}</span>
+      <span class="row"><span class="k">Action</span><span class="clamp">${it.action ? esc(it.action) : '<span class="todo">Not decided yet</span>'}</span></span>
+      <span class="row"><span class="k">PIC</span><span>${it.pic ? esc(it.pic) : '<span class="todo">Not assigned yet</span>'}</span></span>
+      <span class="row"><span class="k">Target</span><span>${target}</span></span>
+      <span class="card-foot"><span>${esc(it.category || "")}</span>${it.theme ? `<span class="theme-tag">${esc(it.theme)}</span>` : ""}<span>${fu ? `Last follow-up ${esc(fmt(fu.date))}${fu.view ? " · " + esc(fu.view) : ""}` : "No follow-up yet"}</span></span>
+    </button>`;
+  }
+  function groupHead(name, arr) {
+    const outs = uniq(arr.map((i) => i.outlet));
+    return `<div class="group-head"><h2>${esc(name)}</h2><span class="sub">${arr.length} point${arr.length === 1 ? "" : "s"}${outs.length ? " · " + esc(outs.join(", ")) : ""}</span></div>`;
+  }
+  function renderCards(list) {
+    return grouped(list).map(([name, arr]) => `<section class="group">${name ? groupHead(name, arr) : ""}<div class="cards">${arr.map(cardHTML).join("")}</div></section>`).join("");
+  }
+
+  // ---------------- render: summary ----------------
+  function improvedText(it) {
+    if (it.status === "Verified" || it.status === "Closed") return `<span class="pill s-ver">Verified${it.verifiedDate ? " " + esc(fmt(it.verifiedDate)) : ""}</span>${it.verifyResult ? `<div class="sm">${esc(it.verifyResult)}</div>` : ""}`;
+    const fu = lastFU(it);
+    if (fu && fu.view) return `${esc(fu.view)}<div class="sm">QA view on ${esc(fmt(fu.date))}. Not verified yet.</div>`;
+    return `<span class="muted">Not checked yet</span>`;
+  }
+  function renderSummary(list) {
+    const all = state.items;
+    const n = (fn) => all.filter(fn).length;
+    const intro = `<div class="summary-intro"><h2>What did we identify, what action did we take, and has it improved?</h2>
+      <div class="summary-stats"><span><b>${all.length}</b> improvement points identified</span><span><b>${n((i) => i.action)}</b> with an action plan</span>
+      <span><b>${n((i) => (i.log || []).some((e) => e.kind === "followup"))}</b> with follow-up recorded</span><span><b>${n((i) => i.status === "Verified" || i.status === "Closed")}</b> verified</span>
+      <span><b>${n((i) => i.status === "Closed")}</b> closed</span><span><b>${n(isOverdue)}</b> overdue</span></div></div>`;
+    const rows = grouped(list).map(([name, arr]) =>
+      (name ? `<tr class="grp"><td colspan="6">${esc(name)} · ${arr.length}</td></tr>` : "") +
+      arr.map((it) => {
+        const fu = lastFU(it);
+        return `<tr class="item" data-id="${esc(it.id)}">
+          <td><span class="mono">${esc(it.code || "")}</span><div class="sm">${esc(it.outlet || "")}${it.date ? "<br>" + esc(fmt(it.date)) : ""}</div></td>
+          <td><div class="pt">${esc(it.point || "")}</div>${it.feedback ? `<div class="sm">${esc(it.feedback.split("\n")[0])}</div>` : ""}</td>
+          <td>${it.action ? esc(it.action) : '<span class="muted">Not decided yet</span>'}${fu ? `<div class="sm">Done ${esc(fmt(fu.date))}: ${esc(fu.action)}${fu.evidence ? " · Evidence: " + esc(fu.evidence) : ""}</div>` : ""}</td>
+          <td>${esc(it.pic || "—")}<div class="sm">${it.target ? "Target " + esc(fmt(it.target)) : "No target yet"}</div></td>
+          <td><span class="pill ${SCLASS[it.status] || "s-open"}">${esc(it.status || "Open")}</span>${isOverdue(it) ? ' <span class="pill s-over">Overdue</span>' : ""}</td>
+          <td>${improvedText(it)}</td></tr>`;
+      }).join("")).join("");
+    return intro + `<div class="table-wrap"><table><thead><tr><th>Point</th><th>What we found</th><th>What we did</th><th>PIC / target</th><th>Status</th><th>Has it improved?</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  }
+
+  // ---------------- main render ----------------
+  function render() {
+    refreshOptions();
+    renderTiles();
+    renderBreakdown();
+    $("#tabCards").setAttribute("aria-selected", state.view === "cards");
+    $("#tabSummary").setAttribute("aria-selected", state.view === "summary");
+    const f = state.f;
+    $("#fClear").hidden = !(f.q || f.outlet || f.category || f.pic || f.status);
+    const list = $("#list");
+    if (state.db === null) { list.innerHTML = ""; $("#resultLine").textContent = ""; return; }
+    if (!state.loaded) return;
+    if (!state.items.length) {
+      list.innerHTML = `<div class="empty"><strong>No improvement points yet</strong><span>Add the first point from the latest Mystery Shopper report.</span>${state.canWrite ? '<button class="btn primary" data-act="new">+ New improvement point</button>' : ""}</div>`;
+      $("#resultLine").textContent = "";
+      return;
+    }
+    const shown = sortItems(state.items.filter(matches));
+    $("#resultLine").textContent = shown.length === state.items.length ? `Showing all ${shown.length} improvement points` : `Showing ${shown.length} of ${state.items.length} improvement points`;
+    if (!shown.length) { list.innerHTML = `<div class="empty"><strong>No points match these filters</strong><button class="btn" data-act="clear">Clear filters</button></div>`; return; }
+    list.innerHTML = state.view === "summary" ? renderSummary(shown) : renderCards(shown);
+  }
+
+  // ---------------- drawer ----------------
+  function current() { return state.items.find((i) => i.id === state.openId); }
+  function openDrawer(id) {
+    state.openId = id; state.fuView = "";
+    $("#fu_date").value = today(); $("#fu_action").value = ""; $("#fu_evidence").value = ""; $("#fuErr").hidden = true;
+    $("#reopenBox").hidden = true; $("#delConfirm").hidden = true; $("#delAsk").hidden = false;
+    $("#drawer").hidden = false; $("#scrim").hidden = false;
+    fillDrawer(true);
+    setTimeout(() => $("#dClose").focus(), 30);
+  }
+  function closeDrawer() {
+    if (document.activeElement && document.activeElement.dataset && document.activeElement.dataset.field) document.activeElement.blur();
+    state.openId = null; $("#drawer").hidden = true; $("#scrim").hidden = true;
+  }
+  function fillDrawer(force) {
+    const it = current();
+    if (!it) { if (state.openId) { closeDrawer(); toast("That point was deleted."); } return; }
+    $("#dCode").textContent = it.code || "";
+    $("#dOutletChip").textContent = it.outlet || "No outlet";
+    const sp = $("#dStatusPill"); sp.textContent = it.status || "Open"; sp.className = "pill " + (SCLASS[it.status] || "s-open");
+    const op = $("#dOverPill"); op.hidden = !isOverdue(it); if (isOverdue(it)) op.textContent = `Overdue ${dayDiff(it.target, today())} days`;
+    const fu = lastFU(it);
+    $("#dDates").innerHTML = [
+      ["Follow-up date", fu ? fmt(fu.date) : "—"], ["Verified", fmt(it.verifiedDate) || "—"], ["Closed", fmt(it.closedDate) || "—"],
+      ...(it.reopenCount ? [["Reopened", it.reopenCount + (it.reopenCount === 1 ? " time" : " times")]] : []),
+    ].map(([k, v]) => `<span>${esc(k)}: <b>${esc(v)}</b></span>`).join("");
+    for (const el of document.querySelectorAll("#drawer [data-field]")) {
+      if (!force && document.activeElement === el) continue;
+      const v = it[el.dataset.field] ?? "";
+      if (el.tagName === "SELECT" && v && ![...el.options].some((o) => o.value === v)) el.insertAdjacentHTML("beforeend", `<option value="${esc(v)}">${esc(v)}</option>`);
+      if (el.value !== v) el.value = v;
+      el.disabled = !state.canWrite;
+    }
+    $("#dStatusSeg").innerHTML = STATUSES.map((s) => `<button type="button" class="${SCLASS[s]}" data-status="${esc(s)}" aria-pressed="${it.status === s}" ${state.canWrite ? "" : "disabled"}>${esc(s)}</button>`).join("");
+    renderLog(it);
+    const va = $("#verifyActions");
+    if (!state.canWrite) va.innerHTML = "";
+    else if (it.status === "Closed") va.innerHTML = `<button class="btn small" data-act="reopen">Reopen: issue seen again</button>`;
+    else if (it.status === "Verified") va.innerHTML = `<button class="btn small primary" data-act="close">Close this point</button><button class="btn small" data-act="reopen">Reopen: issue seen again</button>`;
+    else va.innerHTML = `<button class="btn small primary" data-act="verify">Mark as verified</button><span class="note">Verify once QA has checked that the issue no longer happens.</span>`;
+    $("#fuForm").hidden = !state.canWrite;
+    $("#deleteRow").hidden = !state.canWrite;
+    for (const b of document.querySelectorAll("#fuView button")) b.setAttribute("aria-pressed", b.dataset.v === state.fuView);
+  }
+  async function renderLog(it) {
+    const log = (it.log || []).slice().sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+    const ul = $("#dLog");
+    if (!log.length) { ul.innerHTML = `<li class="ev">No follow-up recorded yet.</li>`; return; }
+    ul.innerHTML = log.map((e) => e.kind === "followup"
+      ? `<li><div class="lh"><b>${esc(fmt(e.date))}</b>${e.view ? `<span class="pill ${e.view === "Improved" ? "s-ver" : e.view === "Not yet" ? "s-over" : "s-mon"}">${esc(e.view)}</span>` : ""}<span class="by" data-by="${esc(e.by || "")}"></span></div>
+          <div class="kv"><span>Action</span><span>${esc(e.action || "")}</span></div>${e.evidence ? `<div class="kv"><span>Evidence</span><span>${esc(e.evidence)}</span></div>` : ""}</li>`
+      : `<li class="ev">${esc(fmt(e.date))} · ${esc(e.text || "")} <span class="by" data-by="${esc(e.by || "")}"></span></li>`).join("");
+    const ids = uniq(log.map((e) => e.by));
+    if (state.user && ids.length) {
+      try {
+        const ps = await state.user.profiles(ids);
+        for (const s of ul.querySelectorAll(".by")) { const p = ps[s.dataset.by]; if (p && p.name) s.textContent = "by " + p.name; }
+      } catch (e) {}
+    }
+  }
+  function setStatus(it, s) {
+    if (it.status === s) return;
+    const t = today();
+    appendLog(it.id, { kind: "event", date: t, text: `Status changed to ${s}` }, (cur) => {
+      const p = { status: s };
+      if (s === "Verified" || s === "Closed") { if (!cur.verifiedDate) p.verifiedDate = t; }
+      else p.verifiedDate = "";
+      p.closedDate = s === "Closed" ? (cur.closedDate || t) : "";
+      return p;
+    });
+    toast(`Status: ${s}`);
+  }
+
+  // ---------------- new point ----------------
+  function nextCode(outlet) {
+    const pre = OUTLET_CODES[outlet] || (outlet.split(/\s+/).map((w) => w[0]).join("").toUpperCase().slice(0, 4) || "MS");
+    const nums = state.items.map((i) => String(i.code || "")).filter((c) => c.startsWith(pre + "-")).map((c) => parseInt(c.slice(pre.length + 1), 10) || 0);
+    return `${pre}-${String((nums.length ? Math.max(...nums) : 0) + 1).padStart(2, "0")}`;
+  }
+  function openModal() {
+    for (const id of ["n_outlet", "n_feedback", "n_point", "n_theme", "n_action", "n_pic", "n_target"]) $("#" + id).value = "";
+    $("#n_date").value = today(); $("#n_category").value = ""; $("#nErr").hidden = true;
+    if (state.f.outlet) $("#n_outlet").value = state.f.outlet;
+    $("#modal").hidden = false; setTimeout(() => $("#n_outlet").focus(), 30);
+  }
+  async function saveNew(ev) {
+    ev.preventDefault();
+    const v = (id) => $("#" + id).value.trim();
+    const missing = [];
+    if (!v("n_outlet")) missing.push("outlet"); if (!v("n_point")) missing.push("improvement point"); if (!v("n_category")) missing.push("category");
+    if (missing.length) { const e = $("#nErr"); e.textContent = "Please fill in: " + missing.join(", ") + "."; e.hidden = false; return; }
+    const now = new Date().toISOString();
+    const doc = {
+      code: nextCode(v("n_outlet")), date: v("n_date"), outlet: v("n_outlet"), feedback: v("n_feedback"), category: v("n_category"), theme: v("n_theme"),
+      point: v("n_point"), action: v("n_action"), pic: v("n_pic"), target: v("n_target"), status: "Open",
+      verifyHow: "Review the next Mystery Shopper report for this outlet.", verifyResult: "", verifiedDate: "", closedDate: "", remarks: "",
+      reopenCount: 0, log: [{ id: rid(), kind: "event", date: today(), text: "Point created", by: state.meId || "" }], createdAt: now, updatedAt: now,
+    };
+    $("#nSave").disabled = true;
+    try { await state.col.doc().set(doc); $("#modal").hidden = true; toast(`Added ${doc.code}`); }
+    catch (e) { onWriteError(e); }
+    finally { $("#nSave").disabled = false; }
+  }
+
+  // ---------------- Excel export ----------------
+  function loadXlsx() {
+    if (window.XLSX) return Promise.resolve();
+    return new Promise((res, rej) => { const s = document.createElement("script"); s.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
+  }
+  async function exportXlsx() {
+    const btn = $("#btnExport"); btn.disabled = true;
+    try {
+      await loadXlsx();
+      const d = (s) => (s && /^\d{4}-\d{2}-\d{2}$/.test(s) ? s.split("-").reverse().join("/") : "");
+      const items = sortItems(state.items);
+      const rows = items.map((it) => { const fu = lastFU(it); return {
+        "ID": it.code || "", "Date": d(it.date), "Outlet": it.outlet || "", "Mystery Shopper Feedback": it.feedback || "", "Improvement Category": it.category || "",
+        "Improvement Theme": it.theme || "", "Improvement Point": it.point || "", "Action Plan": it.action || "", "PIC": it.pic || "", "Target Date": d(it.target),
+        "Status": it.status || "", "Overdue": isOverdue(it) ? "Yes" : "", "Follow-up Date": fu ? d(fu.date) : "", "Latest Action Taken": fu ? fu.action || "" : "",
+        "Evidence": fu ? fu.evidence || "" : "", "QA View": fu ? fu.view || "" : "", "How QA Verifies": it.verifyHow || "", "Verification Result": it.verifyResult || "",
+        "Verified Date": d(it.verifiedDate), "Closed Date": d(it.closedDate), "Times Reopened": it.reopenCount || 0, "Remarks": it.remarks || "" }; });
+      const logRows = [];
+      for (const it of items) for (const e of (it.log || []).slice().sort((a, b) => (a.date || "").localeCompare(b.date || "")))
+        logRows.push({ "ID": it.code || "", "Outlet": it.outlet || "", "Improvement Point": it.point || "", "Date": d(e.date), "Type": e.kind === "followup" ? "Follow-up" : "Status / event",
+          "Action Taken / Event": e.kind === "followup" ? e.action || "" : e.text || "", "Evidence": e.evidence || "", "QA View": e.view || "" });
+      const wb = XLSX.utils.book_new();
+      const ws1 = XLSX.utils.json_to_sheet(rows);
+      ws1["!cols"] = [8, 11, 16, 50, 20, 22, 45, 45, 20, 11, 16, 8, 12, 40, 26, 14, 36, 36, 12, 12, 8, 30].map((w) => ({ wch: w }));
+      XLSX.utils.book_append_sheet(wb, ws1, "Tracker");
+      const ws2 = XLSX.utils.json_to_sheet(logRows.length ? logRows : [{ "ID": "", "Outlet": "", "Improvement Point": "", "Date": "", "Type": "", "Action Taken / Event": "", "Evidence": "", "QA View": "" }]);
+      ws2["!cols"] = [8, 16, 45, 11, 14, 50, 30, 16].map((w) => ({ wch: w }));
+      XLSX.utils.book_append_sheet(wb, ws2, "Follow-up log");
+      const buf = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+      await state.dl.save({ filename: `UR_Klinik_MS_Improvement_Tracker_${today()}.xlsx`, data: buf });
+      toast("Excel file saved");
+    } catch (e) {
+      const code = e && e.code;
+      if (code === "declined") {}
+      else if (code === "rate_limited") toast("A save is already waiting for your answer.");
+      else toast("Could not create the Excel file. Try again.");
+    } finally { btn.disabled = false; }
+  }
+
+  function setReadOnly(ro) {
+    state.canWrite = !ro;
+    $("#btnNew").hidden = ro; $("#roBadge").hidden = !ro;
+    if (state.openId) fillDrawer(false);
+    render();
+  }
+
+  // ---------------- events ----------------
+  document.addEventListener("click", (ev) => {
+    const t = ev.target.closest("button, tr.item");
+    if (!t) return;
+    if (t.classList.contains("tile")) { const k = t.dataset.k; state.f.status = state.f.status === k ? "" : k; savePrefs(); render(); return; }
+    if (t.closest(".bd") && t.dataset.key) { state.f.outlet = ""; state.f.category = ""; state.f.pic = ""; state.f[t.dataset.key] = t.dataset.val; state.f.status = "active"; savePrefs(); render(); return; }
+    if (t.classList.contains("card") || t.matches("tr.item")) { openDrawer(t.dataset.id); return; }
+    const act = t.dataset.act;
+    if (act === "new") return openModal();
+    if (act === "clear") { clearFilters(); return; }
+    const it = current();
+    if (t.dataset.status && it) { setStatus(it, t.dataset.status); return; }
+    if (act === "verify" && it) {
+      if (!$("#d_verifyResult").value.trim()) { $("#d_verifyResult").focus(); toast("Write the verification result first."); return; }
+      setStatus(it, "Verified"); return;
+    }
+    if (act === "close" && it) { setStatus(it, "Closed"); return; }
+    if (act === "reopen") { $("#reopenBox").hidden = false; $("#reopen_reason").focus(); return; }
+  });
+  $("#reopenCancel").addEventListener("click", () => { $("#reopenBox").hidden = true; });
+  $("#reopenGo").addEventListener("click", () => {
+    const it = current(); if (!it) return;
+    const reason = $("#reopen_reason").value.trim();
+    appendLog(it.id, { kind: "event", date: today(), text: "Reopened: issue seen again" + (reason ? ` (${reason})` : "") }, (cur) => ({ status: "Open", verifiedDate: "", closedDate: "", reopenCount: (cur.reopenCount || 0) + 1 }));
+    $("#reopenBox").hidden = true; $("#reopen_reason").value = ""; toast("Reopened");
+  });
+  $("#fuView").addEventListener("click", (ev) => { const b = ev.target.closest("button"); if (!b) return; state.fuView = state.fuView === b.dataset.v ? "" : b.dataset.v; for (const x of document.querySelectorAll("#fuView button")) x.setAttribute("aria-pressed", x.dataset.v === state.fuView); });
+  $("#fuAdd").addEventListener("click", () => {
+    const it = current(); if (!it) return;
+    const action = $("#fu_action").value.trim();
+    if (!action) { const e = $("#fuErr"); e.textContent = "Write what action was taken."; e.hidden = false; $("#fu_action").focus(); return; }
+    $("#fuErr").hidden = true;
+    appendLog(it.id, { kind: "followup", date: $("#fu_date").value || today(), action, evidence: $("#fu_evidence").value.trim(), view: state.fuView });
+    $("#fu_action").value = ""; $("#fu_evidence").value = ""; state.fuView = "";
+    for (const x of document.querySelectorAll("#fuView button")) x.setAttribute("aria-pressed", "false");
+    toast(it.status === "Open" ? "Follow-up saved. Consider moving the status to Action in Progress." : "Follow-up saved");
+  });
+  document.querySelector("#drawer").addEventListener("change", (ev) => {
+    const el = ev.target; const f = el.dataset && el.dataset.field; const it = current();
+    if (!f || !it || !state.canWrite) return;
+    const v = el.value.trim();
+    if ((it[f] ?? "") === v) return;
+    savePatch(it.id, { [f]: v });
+  });
+  $("#dClose").addEventListener("click", closeDrawer);
+  $("#scrim").addEventListener("click", closeDrawer);
+  $("#delAsk").addEventListener("click", () => { $("#delConfirm").hidden = false; $("#delAsk").hidden = true; });
+  $("#delNo").addEventListener("click", () => { $("#delConfirm").hidden = true; $("#delAsk").hidden = false; });
+  $("#delYes").addEventListener("click", async () => { const it = current(); if (!it) return; const code = it.code; closeDrawer(); try { await state.col.doc(it.id).delete(); toast(`Deleted ${code}`); } catch (e) { onWriteError(e); } });
+  document.addEventListener("keydown", (ev) => { if (ev.key === "Escape") { if (!$("#modal").hidden) $("#modal").hidden = true; else if (state.openId) closeDrawer(); } });
+  $("#btnNew").addEventListener("click", openModal);
+  $("#nCancel").addEventListener("click", () => { $("#modal").hidden = true; });
+  $("#modalScrim").addEventListener("click", () => { $("#modal").hidden = true; });
+  $("#newForm").addEventListener("submit", saveNew);
+  $("#btnExport").addEventListener("click", exportXlsx);
+  $("#tabCards").addEventListener("click", () => { state.view = "cards"; savePrefs(); render(); });
+  $("#tabSummary").addEventListener("click", () => { state.view = "summary"; savePrefs(); render(); });
+  let qT;
+  $("#fQ").addEventListener("input", (ev) => { clearTimeout(qT); qT = setTimeout(() => { state.f.q = ev.target.value; savePrefs(); render(); }, 150); });
+  for (const [id, key] of [["fOutlet", "outlet"], ["fCategory", "category"], ["fPic", "pic"], ["fStatus", "status"], ["fGroup", "group"]])
+    $("#" + id).addEventListener("change", (ev) => { state.f[key] = ev.target.value; savePrefs(); render(); });
+  function clearFilters() { Object.assign(state.f, { q: "", outlet: "", category: "", pic: "", status: "" }); savePrefs(); render(); }
+  $("#fClear").addEventListener("click", clearFilters);
+
+  // ---------------- boot ----------------
+  render();
+  (async () => {
+    const C = window.claude;
+    const use = (n) => (C && typeof C.use === "function" ? C.use(n).catch(() => null) : Promise.resolve(null));
+    const [db, user, dl] = await Promise.all([use("db"), use("user"), use("downloads")]);
+    state.db = db; state.user = user; state.dl = dl;
+    if (!db) {
+      const b = $("#banner"); b.hidden = false;
+      b.innerHTML = "<strong>The tracker could not load its shared data here.</strong> Open this page on claude.ai while signed in to see and update the improvement points.";
+      $("#btnNew").hidden = true; render(); return;
+    }
+    if (dl) $("#btnExport").hidden = false;
+    if (user) {
+      try { state.meId = await user.id(); } catch (e) {}
+      try { const can = await user.can("data.write"); if (can === false) setReadOnly(true); } catch (e) {}
+    }
+    state.col = db.collection("points");
+    state.col.onSnapshot((snap) => {
+      state.items = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      state.loaded = true;
+      render();
+      if (state.openId) fillDrawer(false);
+    }, (err) => {
+      const b = $("#banner"); b.hidden = false;
+      b.innerHTML = err && err.code === "revoked" ? "<strong>Access to this tracker changed.</strong> Reload the page." : "<strong>Live updates stopped.</strong> Reload the page to see the latest changes.";
+    });
+  })();
+})();
+</script>

@@ -585,7 +585,7 @@ td .pt { font-weight: 600; }
     const f = state.f;
     $("#fClear").hidden = !(f.q || f.outlet || f.category || f.pic || f.status);
     const list = $("#list");
-    if (state.db === null) { list.innerHTML = ""; $("#resultLine").textContent = ""; return; }
+    if (state.db === null && !state.offline) { list.innerHTML = ""; $("#resultLine").textContent = ""; return; }
     if (!state.loaded) return;
     if (!state.items.length) {
       list.innerHTML = `<div class="empty"><strong>No improvement points yet</strong><span>Add the first point from the latest Mystery Shopper report.</span>${state.canWrite ? '<button class="btn primary" data-act="new">+ New improvement point</button>' : ""}</div>`;
@@ -731,13 +731,23 @@ td .pt { font-weight: 600; }
       ws2["!cols"] = [8, 16, 45, 11, 14, 50, 30, 16].map((w) => ({ wch: w }));
       XLSX.utils.book_append_sheet(wb, ws2, "Follow-up log");
       const buf = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-      await state.dl.save({ filename: `UR_Klinik_MS_Improvement_Tracker_${today()}.xlsx`, data: buf });
-      toast("Excel file saved");
+      const filename = `UR_Klinik_MS_Improvement_Tracker_${today()}.xlsx`;
+      if (state.dl) {
+        await state.dl.save({ filename, data: buf });
+        toast("Excel file saved");
+      } else {
+        // Offline copy opened as a normal web page: a plain download link works here.
+        const url = URL.createObjectURL(new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
+        const a = document.createElement("a"); a.href = url; a.download = filename;
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 3000);
+        toast("Excel file downloaded");
+      }
     } catch (e) {
       const code = e && e.code;
       if (code === "declined") {}
       else if (code === "rate_limited") toast("A save is already waiting for your answer.");
-      else toast("Could not create the Excel file. Try again.");
+      else toast(state.offline ? "Could not create the Excel file. Check your internet connection and try again." : "Could not create the Excel file. Try again.");
     } finally { btn.disabled = false; }
   }
 
@@ -752,6 +762,11 @@ td .pt { font-weight: 600; }
   document.addEventListener("click", (ev) => {
     const t = ev.target.closest("button, tr.item");
     if (!t) return;
+    if (t.id === "resetSnap") {
+      if (t.dataset.armed) { try { localStorage.removeItem(state.offlineKey); } catch (e) {} location.reload(); }
+      else { t.dataset.armed = "1"; t.textContent = "Click again to discard your changes"; }
+      return;
+    }
     if (t.classList.contains("tile")) { const k = t.dataset.k; state.f.status = state.f.status === k ? "" : k; savePrefs(); render(); return; }
     if (t.closest(".bd") && t.dataset.key) { state.f.outlet = ""; state.f.category = ""; state.f.pic = ""; state.f[t.dataset.key] = t.dataset.val; state.f.status = "active"; savePrefs(); render(); return; }
     if (t.classList.contains("card") || t.matches("tr.item")) { openDrawer(t.dataset.id); return; }
@@ -812,6 +827,46 @@ td .pt { font-weight: 600; }
   function clearFilters() { Object.assign(state.f, { q: "", outlet: "", category: "", pic: "", status: "" }); savePrefs(); render(); }
   $("#fClear").addEventListener("click", clearFilters);
 
+  // ---------------- offline copy (a saved HTML file with the points built in) ----------------
+  // Same calls as the online store, kept in memory and saved in this browser only.
+  function localCollection(initial, key) {
+    const docs = new Map(initial.map((d) => { const { id, ...rest } = d; return [id, rest]; }));
+    const subs = [];
+    const save = () => { try { localStorage.setItem(key, JSON.stringify([...docs].map(([id, d]) => ({ id, ...d })))); } catch (e) {} };
+    const emit = () => { const list = [...docs].map(([id, d]) => ({ id, exists: true, data: () => d })); subs.forEach((f) => f({ docs: list })); };
+    const clone = (o) => JSON.parse(JSON.stringify(o));
+    const ref = (id) => ({
+      id,
+      get: async () => ({ id, exists: docs.has(id), data: () => docs.get(id) }),
+      set: async (d) => { docs.set(id, clone(d)); save(); emit(); },
+      update: async (p) => { if (!docs.has(id)) throw { code: "invalid_argument" }; docs.set(id, { ...docs.get(id), ...clone(p) }); save(); emit(); },
+      delete: async () => { docs.delete(id); save(); emit(); },
+    });
+    return { doc: (id) => ref(id || "local-" + rid()), onSnapshot: (f) => { subs.push(f); setTimeout(emit, 0); return () => {}; } };
+  }
+  function listen() {
+    state.col.onSnapshot((snap) => {
+      state.items = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      state.loaded = true;
+      render();
+      if (state.openId) fillDrawer(false);
+    }, (err) => {
+      const b = $("#banner"); b.hidden = false;
+      b.innerHTML = err && err.code === "revoked" ? "<strong>Access to this tracker changed.</strong> Reload the page." : "<strong>Live updates stopped.</strong> Reload the page to see the latest changes.";
+    });
+  }
+  function startOffline(snap) {
+    state.offline = true;
+    state.offlineKey = "msTrackerOffline:" + (snap.takenAt || "copy");
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem(state.offlineKey) || "null"); } catch (e) {}
+    state.col = localCollection(Array.isArray(saved) ? saved : snap.points || [], state.offlineKey);
+    const b = $("#banner"); b.hidden = false;
+    b.innerHTML = `<strong>Offline copy · data as of ${esc(fmt(snap.takenAt))}.</strong> Changes you make here are saved only in this browser on this device and don't update the online tracker.${saved ? ' <button class="clear" id="resetSnap">Reset to the original copy</button>' : ""}`;
+    $("#btnExport").hidden = false;
+    listen();
+  }
+
   // ---------------- boot ----------------
   render();
   (async () => {
@@ -819,6 +874,10 @@ td .pt { font-weight: 600; }
     const use = (n) => (C && typeof C.use === "function" ? C.use(n).catch(() => null) : Promise.resolve(null));
     const [db, user, dl] = await Promise.all([use("db"), use("user"), use("downloads")]);
     state.db = db; state.user = user; state.dl = dl;
+    const snapEl = document.getElementById("snapshot");
+    if (!db && snapEl) {
+      try { startOffline(JSON.parse(snapEl.textContent)); return; } catch (e) {}
+    }
     if (!db) {
       const b = $("#banner"); b.hidden = false;
       b.innerHTML = "<strong>The tracker could not load its shared data here.</strong> Open this page on claude.ai while signed in to see and update the improvement points.";
@@ -830,15 +889,7 @@ td .pt { font-weight: 600; }
       try { const can = await user.can("data.write"); if (can === false) setReadOnly(true); } catch (e) {}
     }
     state.col = db.collection("points");
-    state.col.onSnapshot((snap) => {
-      state.items = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-      state.loaded = true;
-      render();
-      if (state.openId) fillDrawer(false);
-    }, (err) => {
-      const b = $("#banner"); b.hidden = false;
-      b.innerHTML = err && err.code === "revoked" ? "<strong>Access to this tracker changed.</strong> Reload the page." : "<strong>Live updates stopped.</strong> Reload the page to see the latest changes.";
-    });
+    listen();
   })();
 })();
 </script>
